@@ -2,33 +2,22 @@ from flask import Flask, jsonify
 
 from middleware.auth_middleware import token_required
 
-app = Flask(__name__)
 
-
-@app.route('/')
-def hello_world():
+def create_app():
     """
-    Hello world
-    :return: Hello World message
+    Create app
+    add blueprints here to register them as routes
+    :return: app
     """
-    return 'Hello World!!!'
+    app = Flask(__name__)
 
+    from routes import auth
 
-@app.route('/test_auth')
-@token_required
-def test_auth(token):
-    """
-    Test auth
-    does not need to check for authorization. if we get here, it means that the token is valid
-    :param token: returned token from `token_required`
-    :return: authorized message and claims from JWT token
-    """
+    # register blueprints and add prefix to its routes
+    app.register_blueprint(auth.bp, url_prefix='/')
 
-    return jsonify({
-        "message": "Authorized",
-        "data": token
-    }), 200
+    return app
 
 
 if __name__ == '__main__':
-    app.run()
+    create_app().run()

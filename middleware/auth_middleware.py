@@ -6,6 +6,11 @@ import requests
 
 
 def get_jwks(bearer_token):
+    """
+    Get JWKS from Clerk API
+    :param bearer_token: Clerk API Key from .env file
+    :return: JWKS as JSON array of possible keys
+    """
     headers = {
         "Authorization": f"Bearer {bearer_token}"
     }
@@ -14,6 +19,12 @@ def get_jwks(bearer_token):
 
 
 def decode_jwt(token):
+    """
+    Decode JWT token
+    Requires `CLERK_API_KEY` to be set in .env file
+    :param token: JWT token
+    :return: decoded JWT token
+    """
     api_key = os.getenv("CLERK_API_KEY")
     if not api_key:
         abort(500, "Clerk API Key is missing!")
@@ -22,7 +33,13 @@ def decode_jwt(token):
 
     header = jwt.get_unverified_header(token)
 
-    key = [k for k in jwks['keys'] if k["kid"] == header["kid"]][0]
+    key = [k for k in jwks['keys'] if k["kid"] == header["kid"]]
+
+    # check if key has at least one element
+    if not key:
+        abort(401, "Invalid Token!")
+
+    key = key[0]
 
     decoded = jwt.decode(token, key)
 
@@ -30,6 +47,10 @@ def decode_jwt(token):
 
 
 def token_required(f):
+    """
+    Token required decorator
+    :return: if the message is authenticated, the claims from JWT token. Otherwise, an error message
+    """
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
