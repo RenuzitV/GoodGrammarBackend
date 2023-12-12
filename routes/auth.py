@@ -31,5 +31,10 @@ def test_auth(token):
 
 
 @bp.route('/user/create_user', methods=['POST'])
-def signup():
+def create_user():
     return User().create_user()
+
+
+@bp.route('/user/get_user/<user_id>', methods=['GET'])
+def get_user(user_id):
+    return User().get_user(user_id)

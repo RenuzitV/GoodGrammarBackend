@@ -28,3 +28,16 @@ class User:
             return jsonify(user),200
 
         return jsonify({"error": "Sign up failed"}), 400
+    
+    def get_user(self, id):
+        #Create a new user based on the form
+        user_result = db.users.find_one({"_id": id})
+        if user_result:
+            print(user_result.get("email"))
+            print(user_result.get("date_created"))
+            print(user_result.get("is_user"))
+            print(user_result.get("password"))
+            print(user_result.get("subscription"))
+            return jsonify(user_result),200
+        else:
+            return jsonify({"error": "User not found"}), 400 
