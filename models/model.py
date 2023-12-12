@@ -14,7 +14,6 @@ class User:
         user = {
             "_id": uuid.uuid4().hex, # change later for clerk
             "email": request.form.get("email"),
-            "password": request.form.get("password"),
             "date_created": datetime.utcnow(),
             "subscription": False,
             "is_user": True
