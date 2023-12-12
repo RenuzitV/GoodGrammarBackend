@@ -6,15 +6,18 @@ TBD
 from flask import Flask, jsonify, request
 from app import db
 import uuid
+from datetime import datetime
 
 class User:
     def signup(self):
         #Create a new user based on the form
         user = {
             "_id": uuid.uuid4().hex, # change later for clerk
-            "name": request.form.get("name"),
             "email": request.form.get("email"),
-            "password": request.form.get("password")
+            "password": request.form.get("password"),
+            "date_created": datetime.utcnow(),
+            "subscription": False,
+            "is_user": True
         }
 
         #Check for existing email address
