@@ -41,3 +41,15 @@ class User:
             return jsonify(user_result),200
         else:
             return jsonify({"error": "User not found"}), 400 
+
+    def delete_user(self, id):
+        #Create a new user based on the form
+        user_result = db.users.find_one({"_id": id})
+        if user_result:
+            try:
+                db.users.delete_one({"_id": id})
+            except:
+                return jsonify({"error": f"Cannot delete the user with id {id} "}), 400 
+            return jsonify(f"User with id {id} deleted"),200 
+        else:
+            return jsonify({"error": "User not found"}), 400 
