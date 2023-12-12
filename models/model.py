@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 
 class User:
-    def signup(self):
+    def create_user(self):
         #Create a new user based on the form
         user = {
             "_id": uuid.uuid4().hex, # change later for clerk

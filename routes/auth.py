@@ -30,6 +30,6 @@ def test_auth(token):
     }), 200
 
 
-@bp.route('/user/signup', methods=['POST'])
+@bp.route('/user/create_user', methods=['POST'])
 def signup():
-    return User().signup()
+    return User().create_user()
