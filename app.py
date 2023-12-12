@@ -1,8 +1,18 @@
+import os
+
 from flask import Flask, jsonify
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 from middleware.auth_middleware import token_required
 
+# setup database
+load_dotenv()
+MONGODB_URI = os.environ['MONGODB_URI']
 
+# Connect to MongoDB cluster:
+client = MongoClient(MONGODB_URI)   
+db = client['database']
 def create_app():
     """
     Create app
@@ -10,6 +20,8 @@ def create_app():
     :return: app
     """
     app = Flask(__name__)
+    
+
 
     from routes import auth
 

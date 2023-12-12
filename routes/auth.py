@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Flask, Blueprint, jsonify
 from middleware.auth_middleware import token_required
+from models.model import User
 
 bp = Blueprint('auth', __name__)
 
@@ -27,3 +28,8 @@ def test_auth(token):
         "message": "Authorized",
         "data": token
     }), 200
+
+
+@bp.route('/user/signup', methods=['POST'])
+def signup():
+    return User().signup()
