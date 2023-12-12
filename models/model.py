@@ -5,13 +5,13 @@ TBD
 
 from flask import Flask, jsonify, request
 from app import db
-
+import uuid
 
 class User:
     def signup(self):
         #Create a new user based on the form
         user = {
-            "_id": "2",
+            "_id": uuid.uuid4().hex, # change later for clerk
             "name": request.form.get("name"),
             "email": request.form.get("email"),
             "password": request.form.get("password")
