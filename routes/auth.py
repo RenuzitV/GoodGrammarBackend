@@ -1,18 +1,8 @@
 from flask import Flask, Blueprint, jsonify
 from middleware.auth_middleware import token_required
-from models.user_model import User
+# from models.user_model import User
 
 bp = Blueprint('auth', __name__)
-
-
-@bp.route('/')
-def hello_world():
-    """
-    Hello world
-    :return: Hello World message
-    """
-    return 'Hello World!!!'
-
 
 @bp.route('/test_auth')
 @token_required
@@ -30,16 +20,16 @@ def test_auth(token):
     }), 200
 
 
-@bp.route('/user/create_user', methods=['POST'])
-def create_user():
-    return User().create_user()
-
-
-@bp.route('/user/get_user/<user_id>', methods=['GET'])
-def get_user(user_id):
-    return User().get_user(user_id)
-
-
-@bp.route('/user/delete_user/<user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    return User().delete_user(user_id)
+# @bp.route('/user/create_user', methods=['POST'])
+# def create_user():
+#     return User().create_user()
+#
+#
+# @bp.route('/user/get_user/<user_id>', methods=['GET'])
+# def get_user(user_id):
+#     return User().get_user(user_id)
+#
+#
+# @bp.route('/user/delete_user/<user_id>', methods=['DELETE'])
+# def delete_user(user_id):
+#     return User().delete_user(user_id)
