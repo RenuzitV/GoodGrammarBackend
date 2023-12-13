@@ -18,14 +18,14 @@ except KeyError:
 client = MongoClient(MONGODB_URI)
 db = client['database']
 
+app = Flask(__name__)
 
-def create_app():
+def create_app(app):
     """
     Create app
     add blueprints here to register them as routes
     :return: app
     """
-    app = Flask(__name__)
 
     from routes import auth, clerk
 
@@ -37,4 +37,4 @@ def create_app():
 
 
 if __name__ == '__main__':
-    create_app().run()
+    create_app(app).run()
