@@ -27,10 +27,11 @@ def create_app():
     """
     app = Flask(__name__)
 
-    from routes import auth
+    from routes import auth, clerk
 
     # register blueprints and add prefix to its routes
     app.register_blueprint(auth.bp, url_prefix='/')
+    app.register_blueprint(clerk.bp, url_prefix='/webhook/clerk')
 
     return app
 
