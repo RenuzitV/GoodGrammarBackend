@@ -37,4 +37,7 @@ def create_app(app):
 
 
 if __name__ == '__main__':
-    create_app(app).run(port=10000)
+    created_app = create_app(app)
+    on_dev = os.getenv('FLASK_ENV') != 'production'
+    if on_dev:
+        created_app.run(host=5000)
