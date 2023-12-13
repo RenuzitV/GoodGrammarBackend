@@ -1,11 +1,12 @@
+import os
+
 from flask import Flask, request, abort, jsonify, Blueprint
 from svix.api import Svix
 from svix.exceptions import WebhookVerificationError
 
-SVIX_SECRET = 'whsec_kIzK2X66hsfeyzH3+F56QHJhzoqmCnej'
+SVIX_SECRET = os.getenv("SVIX_SIGNUP_KEY")
 
 bp = Blueprint('clerk', __name__)
-
 
 @bp.route('/signup', methods=['POST'])
 def clerk_webhook():
