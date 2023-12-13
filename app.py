@@ -8,11 +8,17 @@ from middleware.auth_middleware import token_required
 
 # setup database
 load_dotenv()
-MONGODB_URI = os.environ['MONGODB_URI']
+MONGODB_URI = "mongodb://localhost:27017/database"
+try:
+    MONGODB_URI = os.environ['MONGODB_URI']
+except KeyError:
+    print("No MONGODB_URI environment variable found. Using default value")
 
 # Connect to MongoDB cluster:
-client = MongoClient(MONGODB_URI)   
+client = MongoClient(MONGODB_URI)
 db = client['database']
+
+
 def create_app():
     """
     Create app
@@ -20,8 +26,6 @@ def create_app():
     :return: app
     """
     app = Flask(__name__)
-    
-
 
     from routes import auth
 

@@ -44,7 +44,7 @@ class User:
 
     def delete_user(self, id):
         #Create a new user based on the form
-        user_result = db.users.find_one({"_id": id})
+        user_result = db.users.find_one({"_ids": id})
         if user_result:
             try:
                 db.users.delete_one({"_id": id})

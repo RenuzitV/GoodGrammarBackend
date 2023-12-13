@@ -1,6 +1,6 @@
 from flask import Flask, Blueprint, jsonify
 from middleware.auth_middleware import token_required
-from models.model import User
+from models.user_model import User
 
 bp = Blueprint('auth', __name__)
 

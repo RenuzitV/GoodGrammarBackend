@@ -27,7 +27,8 @@ def decode_jwt(token):
     """
     api_key = os.getenv("CLERK_API_KEY")
     if not api_key:
-        abort(500, "Clerk API Key is missing!")
+        print("Clerk API Key is missing!")
+        abort(500, "Something went wrong. Please contact support")
 
     jwks = get_jwks(api_key)
 
