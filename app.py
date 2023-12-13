@@ -40,11 +40,10 @@ def create_app(app):
     return app
 
 
-if __name__ == '__main__':
-    created_app = create_app(app)
-    on_dev = os.getenv('FLASK_ENV') != 'production'
-    if on_dev:
-        print("Running on development environment")
-        created_app.run(host=5000)
-    else:
-        print("Running on production environment")
+created_app = create_app(app)
+on_dev = os.getenv('FLASK_ENV') != 'production'
+if on_dev:
+    print("Running on development environment")
+    created_app.run(host=5000)
+else:
+    print("Running on production environment")
