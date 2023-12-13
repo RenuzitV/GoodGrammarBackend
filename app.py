@@ -20,6 +20,10 @@ db = client['database']
 
 app = Flask(__name__)
 
+@app.route('/asd')
+def hello_world():
+    return 'Hello, World!'
+
 def create_app(app):
     """
     Create app
@@ -40,4 +44,7 @@ if __name__ == '__main__':
     created_app = create_app(app)
     on_dev = os.getenv('FLASK_ENV') != 'production'
     if on_dev:
+        print("Running on development environment")
         created_app.run(host=5000)
+    else:
+        print("Running on production environment")
