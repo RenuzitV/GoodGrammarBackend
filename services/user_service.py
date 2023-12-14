@@ -4,12 +4,13 @@ from flask import Flask, jsonify, request
 from models.user_model import User
 from database.db import db
 
+
 def create_user_by_id(user_id):
     # Create a new user based on the form
     user = User(user_id)
 
     # Check for existing email address
-    if db.users.find_one({"_id": user['_id']}):
+    if db.users.find_one({"_id": user.get_id()}):
         return jsonify({"error": "Email address already in use"}), 400
 
     # Insert the user to database
@@ -18,10 +19,10 @@ def create_user_by_id(user_id):
 
     return jsonify({"error": "Cannot create user"}), 500
 
+
 def create_user():
     # Create a new user based on the form
     user = User(uuid.UUID.hex)
-
 
     # Check for existing email address
     if db.users.find_one({"id": user.get_id()}):
