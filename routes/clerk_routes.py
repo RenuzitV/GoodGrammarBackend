@@ -4,6 +4,7 @@ from flask import Flask, request, abort, jsonify, Blueprint
 from svix.api import Svix
 from svix.exceptions import WebhookVerificationError
 from svix.webhooks import Webhook
+from services import user_service
 
 SVIX_SIGNUP_SECRET = os.getenv("SVIX_SIGNUP_KEY")
 
@@ -26,7 +27,11 @@ def clerk_webhook():
         # Process the webhook payload here
         # For now, we are not adding the user to our database, just acknowledging the receipt.
         print("Received valid webhook from Clerk")
-        print(payload)
+
+        user_id = payload["data"]["id"]
+
+        # Create user in our database
+        user_service.create_user_by_id(user_id)
 
         # Return a response to Clerk
         return jsonify({"status": "ok"}), 200

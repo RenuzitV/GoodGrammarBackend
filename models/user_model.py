@@ -2,17 +2,18 @@
 defines the models for the database
 TBD
 """
+from enum import Enum
 
-from flask import Flask, jsonify, request
-from database.db import db
-import uuid
-from datetime import datetime
+
+class UserType(Enum):
+    USER = 1
+    ADMIN = 2
 
 
 class User:
-    def __init__(self, email):
-        self.id = uuid.uuid4().hex
-        self.email = email
-        self.date_created = datetime.utcnow()
-        self.subscription = False
-        self.is_user = True
+    def __init__(self, id):
+        self.id = id
+        self.user_type = UserType.USER
+
+    def get_id(self):
+        return self.id
