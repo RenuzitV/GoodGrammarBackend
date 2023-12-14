@@ -31,10 +31,9 @@ def clerk_webhook():
         user_id = payload["data"]["id"]
 
         # Create user in our database
-        user_service.create_user_by_id(user_id)
-
-        # Return a response to Clerk
-        return jsonify({"status": "ok"}), 200
+        if user_service.create_user_by_id(user_id):
+            # Return a response to Clerk
+            return jsonify({"status": "ok"}), 200
 
     except WebhookVerificationError:
         # If the signature verification fails, reject the request

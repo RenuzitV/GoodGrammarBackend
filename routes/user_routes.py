@@ -7,7 +7,7 @@ bp = Blueprint('user', __name__)
 
 @bp.route('/', methods=['POST'])
 def create_user():
-    return user_service.create_user(request.form)
+    return user_service.create_user()
 
 
 @bp.route('/<user_id>', methods=['GET'])
