@@ -1,8 +1,15 @@
 import os
 from functools import wraps
+
+from dotenv import load_dotenv
 from jose import jwt
 from flask import request, abort
 import requests
+
+load_dotenv()
+
+# defines the API_KEY once when the server starts
+api_key = os.getenv("CLERK_API_KEY")
 
 
 def get_jwks(bearer_token):
@@ -25,7 +32,6 @@ def decode_jwt(token):
     :param token: JWT token
     :return: decoded JWT token
     """
-    api_key = os.getenv("CLERK_API_KEY")
     if not api_key:
         print("Clerk API Key is missing!")
         abort(500, "Something went wrong. Please contact support")
@@ -34,6 +40,7 @@ def decode_jwt(token):
 
     header = jwt.get_unverified_header(token)
 
+    # basically finds the key with the same kid as the token for us to decode
     key = [k for k in jwks['keys'] if k["kid"] == header["kid"]]
 
     # check if key has at least one element
@@ -49,8 +56,10 @@ def decode_jwt(token):
 
 def token_required(f):
     """
-    Token required decorator
-    :return: if the message is authenticated, the claims from JWT token. Otherwise, an error message
+    Token required decorator.
+    Requires the `Authorization` header with JWT token
+
+    :return: if the message is authenticated, the claims from JWT token. Otherwise, an error message in the form of JSON
     """
     @wraps(f)
     def decorated(*args, **kwargs):

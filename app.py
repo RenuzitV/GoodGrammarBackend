@@ -1,38 +1,25 @@
 import os
 
-from flask import Flask, jsonify
+from flask import Flask
 from dotenv import load_dotenv
-from pymongo import MongoClient
-from routes import auth, clerk
-
-from middleware.auth_middleware import token_required
+from routes import auth_routes, clerk_routes, user_routes
 
 # setup database
 load_dotenv()
-# MONGODB_URI = "mongodb://localhost:27017/database"
-# try:
-#     MONGODB_URI = os.environ['MONGODB_URI']
-# except KeyError:
-#     print("No MONGODB_URI environment variable found. Using default value")
-#
-# # Connect to MongoDB cluster:
-# client = MongoClient(MONGODB_URI)
-# db = client['database']
 
+# Generate Flask app
 app = Flask(__name__)
 
-@app.route('/asd')
-def hello_world():
-    return 'Hello, World!'
-
-
 # register blueprints and add prefix to its routes
-app.register_blueprint(auth.bp, url_prefix='/')
-app.register_blueprint(clerk.bp, url_prefix='/webhook/clerk')
+app.register_blueprint(auth_routes.bp, url_prefix='/')
+app.register_blueprint(clerk_routes.bp, url_prefix='/webhook/clerk')
+app.register_blueprint(user_routes.bp, url_prefix='/user')
 
+# run app if we're on development environment
+# otherwise, let the server handle it (e.g. Heroku)
 on_dev = os.getenv('FLASK_ENV') != 'production'
 if on_dev:
     print("Running on development environment")
     app.run()
 else:
-    print("Running on production environment")
+    print("Running on production environment, expecting gunicorn to handle it")
