@@ -6,6 +6,7 @@ from jose import jwt
 from flask import request, abort
 import requests
 
+# decorative functions seems to need to call load_dotenv() again? not sure why
 load_dotenv()
 
 # defines the API_KEY once when the server starts
