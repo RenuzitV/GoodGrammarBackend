@@ -8,6 +8,7 @@ from database.db import db
 import uuid
 from datetime import datetime
 
+
 class User:
     def __init__(self, email):
         self.id = uuid.uuid4().hex
