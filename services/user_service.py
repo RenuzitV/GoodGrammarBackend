@@ -3,23 +3,21 @@ import uuid
 from flask import Flask, jsonify, request
 from models.user_model import User
 from database.db import db
+from utils.Exceptions import UserAlreadyExistsError, InternalServerError
 
 
 def create_user_by_id(user_id):
-    # Create a new user based on the form
-    user = User(user_id)
+    if User.objects(clerk_id=user_id).first():
+        raise UserAlreadyExistsError("User already exists")
 
-    # Check for existing email address
-    if db.users.find_one({"_id": user.get_id()}):
-        return None
+    try:
+        created_user = User(clerk_id=user_id)
+        created_user.save()
+        return created_user
+    except Exception as e:
+        print("Failed to create user:", e)
+        raise InternalServerError("Internal Server Error")
 
-    # Insert the user to database
-    created_user = db.users.insert_one(user)
-
-    if created_user:
-        return user
-
-    raise Exception("Failed to create user")
 
 
 def create_user():

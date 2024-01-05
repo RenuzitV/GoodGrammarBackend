@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import os
+from mongoengine import connect
 
 MONGODB_URI = "mongodb://localhost:27017/database"
 try:
@@ -10,3 +11,4 @@ except KeyError:
 # Connect to MongoDB cluster:
 client = MongoClient(MONGODB_URI)
 db = client['database']
+connect(host=MONGODB_URI)

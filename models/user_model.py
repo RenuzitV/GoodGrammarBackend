@@ -1,19 +1,15 @@
-"""
-defines the models for the database
-TBD
-"""
+from mongoengine import Document, StringField, EnumField
 from enum import Enum
 
 
 class UserType(Enum):
-    USER = 1
-    ADMIN = 2
+    USER = "USER"
+    ADMIN = "ADMIN"
 
 
-class User:
-    def __init__(self, id):
-        self.id = id
-        self.user_type = UserType.USER
+class User(Document):
+    clerk_id = StringField(primary_key=True)
+    user_type = EnumField(UserType, default=UserType.USER)
 
     def get_id(self):
-        return self.id
+        return self.clerk_id
