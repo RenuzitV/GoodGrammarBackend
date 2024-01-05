@@ -11,13 +11,15 @@ def create_user_by_id(user_id):
 
     # Check for existing email address
     if db.users.find_one({"_id": user.get_id()}):
-        return jsonify({"error": "Email address already in use"}), 400
+        return None
 
     # Insert the user to database
-    if db.users.insert_one(user):
-        return jsonify(user), 200
+    created_user = db.users.insert_one(user)
 
-    return jsonify({"error": "Cannot create user"}), 500
+    if created_user:
+        return user
+
+    raise Exception("Failed to create user")
 
 
 def create_user():
