@@ -1,14 +1,15 @@
 from pymongo import MongoClient
-import os
 from mongoengine import connect
+import os
+from dotenv import load_dotenv
 
-MONGODB_URI = "mongodb://localhost:27017/database"
-try:
-    MONGODB_URI = os.environ['MONGODB_URI']
-except KeyError:
-    print("No MONGODB_URI environment variable found. Using default value")
+load_dotenv()  # Load environment variables from .env file
 
-# Connect to MongoDB cluster:
-client = MongoClient(MONGODB_URI)
-db = client['database']
-connect(host=MONGODB_URI)
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/database')
+
+
+def initialize_db():
+    client = MongoClient(MONGODB_URI)
+    db = client.get_default_database()
+    connect(host=MONGODB_URI)
+    return db

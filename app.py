@@ -4,8 +4,15 @@ from flask import Flask
 from dotenv import load_dotenv
 from routes import auth_routes, clerk_routes, user_routes
 
-# setup database
+# do NOT remove thí import statement
+# it's needed to establish a connection to the database
+from database import db
+
+# setup env variables
 load_dotenv()
+
+# initialize database
+db = db.initialize_db()
 
 # Generate Flask app
 app = Flask(__name__)
