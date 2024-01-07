@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 from dotenv import load_dotenv
-from routes import auth_routes, clerk_routes, user_routes
+from routes import auth_routes, clerk_routes, user_routes, file_route
 
 # do NOT remove thí import statement
 # it's needed to establish a connection to the database
@@ -21,6 +21,7 @@ app = Flask(__name__)
 app.register_blueprint(auth_routes.bp, url_prefix='/')
 app.register_blueprint(clerk_routes.bp, url_prefix='/webhook/clerk')
 app.register_blueprint(user_routes.bp, url_prefix='/user')
+app.register_blueprint(file_route.bp, url_prefix='/file')
 
 # run app if we're on development environment
 # otherwise, let the server handle it (e.g. Heroku)
