@@ -1,7 +1,7 @@
 import os
 
 from flask import jsonify, request
-from app import stripe
+import stripe
 from models.user_model import User
 from utils.Exceptions import UserAlreadyExistsError, InternalServerError, UserNotFoundError, InvalidRequestError
 import requests
@@ -60,6 +60,12 @@ def delete_user(user_id):
         raise InvalidRequestError("user_id is required")
 
     deleted_user = User.objects(clerk_id=user_id).first()
+    try:
+        stripe.Customer.delete(user_id)
+    except Exception as e:
+        print("Failed to delete user:", e)
+        raise InternalServerError("Internal Server Error")
+
     if deleted_user:
         deleted_user.delete()
         return deleted_user
@@ -81,10 +87,17 @@ def update_user(user_id):
 
 
 def get_user_email(user_primary_email_id):
-    response = requests.get("https://api.clerk.dev/v1/email_addresses/" + user_primary_email_id,
-                            headers={os.getenv("CLERK_API_KEY")}
+    print("getting user email for id: " + user_primary_email_id)
+    response = requests.get("https://api.clerk.com/v1/email_addresses/" + user_primary_email_id,
+                            headers={
+                                "Authorization": "Bearer " + os.getenv("CLERK_API_KEY")
+                            }
                             )
     if response.status_code == 200:
         return response.json()["email_address"]
+    elif response.status_code == 404:
+        raise UserNotFoundError("User not found")
     else:
+        print(response.status_code)
+        print(response.json())
         raise InternalServerError("Internal Server Error")
