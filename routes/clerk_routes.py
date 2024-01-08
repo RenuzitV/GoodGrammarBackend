@@ -8,8 +8,18 @@ from services import user_service
 from utils.Exceptions import UserAlreadyExistsError, InternalServerError
 
 SVIX_SIGNUP_SECRET = os.getenv("SVIX_SIGNUP_KEY")
+SVIX_DELETE_SECRET = os.getenv("SVIX_DELETE_KEY")
+SVIX_UPDATE_SECRET = os.getenv("SVIX_UPDATE_KEY")
 
 bp = Blueprint('clerk', __name__)
+
+
+def get_user_info_from_payload(payload):
+    user_id = payload["data"]["id"]
+    user_primary_email_id = payload["data"]["primary_email_address_id"]
+
+    user_email = user_service.get_user_email(user_primary_email_id)
+    return user_id, user_email
 
 
 @bp.route('/signup', methods=['POST'])
@@ -24,9 +34,10 @@ def clerk_webhook():
 
     try:
         payload = wh.verify(payload, headers)
-        user_id = payload["data"]["id"]
 
-        created_user = user_service.create_user_by_id(user_id)
+        user_id, user_email = get_user_info_from_payload(payload)
+
+        created_user = user_service.create_user_by_id_and_email(user_id, user_email)
         return jsonify({"status": "ok"}), 200
 
     except UserAlreadyExistsError:
@@ -52,7 +63,7 @@ def clerk_webhook_delete():
     # Retrieve the request body as a raw string
     payload = request.get_data(as_text=True)
 
-    wh = Webhook(SVIX_SIGNUP_SECRET)
+    wh = Webhook(SVIX_DELETE_SECRET)
 
     try:
         payload = wh.verify(payload, headers)
@@ -84,7 +95,7 @@ def clerk_webhook_update():
     # Retrieve the request body as a raw string
     payload = request.get_data(as_text=True)
 
-    wh = Webhook(SVIX_SIGNUP_SECRET)
+    wh = Webhook(SVIX_UPDATE_SECRET)
 
     try:
         payload = wh.verify(payload, headers)
@@ -112,9 +123,10 @@ def clerk_webhook_update():
 def clerk_webhook_no_svix():
     try:
         payload = request.get_json()
-        user_id = payload["data"]["id"]
 
-        created_user = user_service.create_user_by_id(user_id)
+        user_id, user_email = get_user_info_from_payload(payload)
+
+        created_user = user_service.create_user_by_id_and_email(user_id, user_email)
         return jsonify({"status": "ok"}), 200
 
     except UserAlreadyExistsError:
