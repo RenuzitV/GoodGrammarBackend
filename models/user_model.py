@@ -9,7 +9,11 @@ class UserType(Enum):
 
 class User(Document):
     clerk_id = StringField(primary_key=True)
+    stripe_id = StringField(unique=True)
     user_type = EnumField(UserType, default=UserType.USER)
 
     def get_id(self):
-        return self.clerk_id
+        return self.id
+
+    def get_stripe_id(self):
+        return self.stripe_id

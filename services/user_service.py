@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from flask import jsonify, request
 import stripe
@@ -7,42 +8,51 @@ from utils.Exceptions import UserAlreadyExistsError, InternalServerError, UserNo
 import requests
 
 
-def create_user_by_id_and_email(user_id, user_email):
-    if User.objects(clerk_id=user_id).first():
-        raise UserAlreadyExistsError("User already exists")
-
-    try:
-        created_user = User(clerk_id=user_id)
-        created_user.save()
-        stripe.Customer.create(
-            id=user_id,
-            email=user_email
-        )
-        return created_user
-    except Exception as e:
-        print("Failed to create user:", e)
-        raise InternalServerError("Internal Server Error")
-
-
-def create_user():
-    # Create a new user based on the form
-    if not request.is_json:
-        raise InvalidRequestError("Request is not JSON")
-
-    clerk_id = request.json.get("clerk_id", None)
-    if not clerk_id:
+def create_user(user_id=None, user_email="", user_name=""):
+    if not user_id:
         raise InvalidRequestError("clerk_id is required")
 
-    if User.objects(clerk_id=clerk_id).first():
-        raise UserAlreadyExistsError("User already exists")
-
     try:
-        created_user = User(clerk_id=clerk_id)
+        if User.objects(clerk_id=user_id).first():
+            print("User already exists in MongoDB")
+            raise UserAlreadyExistsError("User already exists")
+
+        customer = stripe.Customer.create(
+            email=user_email,
+            name=user_name
+        )
+
+        created_user = User(clerk_id=user_id, stripe_id=customer.id)
         created_user.save()
+
         return created_user
+    except UserAlreadyExistsError:
+        raise UserAlreadyExistsError("User already exists")
     except Exception as e:
         print("Failed to create user:", e)
+        traceback.print_exc()
         raise InternalServerError("Internal Server Error")
+
+
+# def create_user():
+#     # Create a new user based on the form
+#     if not request.is_json:
+#         raise InvalidRequestError("Request is not JSON")
+#
+#     clerk_id = request.json.get("clerk_id", None)
+#     if not clerk_id:
+#         raise InvalidRequestError("clerk_id is required")
+#
+#     if User.objects(clerk_id=clerk_id).first():
+#         raise UserAlreadyExistsError("User already exists")
+#
+#     try:
+#         created_user = User(clerk_id=clerk_id)
+#         created_user.save()
+#         return created_user
+#     except Exception as e:
+#         print("Failed to create user:", e)
+#         raise InternalServerError("Internal Server Error")
 
 
 def get_user(user_id):
@@ -60,8 +70,9 @@ def delete_user(user_id):
         raise InvalidRequestError("user_id is required")
 
     deleted_user = User.objects(clerk_id=user_id).first()
+
     try:
-        stripe.Customer.delete(user_id)
+        stripe.Customer.delete(deleted_user.stripe_id)
     except Exception as e:
         print("Failed to delete user:", e)
         raise InternalServerError("Internal Server Error")
@@ -87,7 +98,6 @@ def update_user(user_id):
 
 
 def get_user_email(user_primary_email_id):
-    print("getting user email for id: " + user_primary_email_id)
     response = requests.get("https://api.clerk.com/v1/email_addresses/" + user_primary_email_id,
                             headers={
                                 "Authorization": "Bearer " + os.getenv("CLERK_API_KEY")
