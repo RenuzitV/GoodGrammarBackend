@@ -58,3 +58,16 @@ def delete_user(user_id):
         return deleted_user
     else:
         raise UserNotFoundError("User not found")
+
+
+def update_user(user_id):
+    # Create a new user based on the form
+    if not request.is_json:
+        raise InvalidRequestError("Request is not JSON")
+
+    user = User.objects(clerk_id=user_id).first()
+    if user:
+        print("received update request on an existing user, but this function is not implemented yet.")
+        return user
+    else:
+        raise UserNotFoundError("User not found")
