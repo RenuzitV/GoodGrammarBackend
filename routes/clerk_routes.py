@@ -1,9 +1,10 @@
 import os
+import trace
 
-from flask import Flask, request, abort, jsonify, Blueprint
-from svix.api import Svix
+from flask import request, abort, jsonify, Blueprint
 from svix.exceptions import WebhookVerificationError
 from svix.webhooks import Webhook
+
 from services import user_service
 from utils.Exceptions import UserAlreadyExistsError, InternalServerError
 
@@ -84,7 +85,7 @@ def clerk_webhook_delete():
 
     except Exception as e:
         print("Failed to process webhook:", e)
-        abort(500, str(e))
+        abort(500, "Internal Server Error")
 
 
 @bp.route('/update', methods=['POST'])
@@ -132,7 +133,7 @@ def clerk_webhook_no_svix():
     except UserAlreadyExistsError:
         return abort(409, "User already exists")
 
-    except InternalServerError:
+    except InternalServerError as e:
         abort(500, "Internal Server Error")
 
     except WebhookVerificationError:
