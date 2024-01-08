@@ -44,6 +44,70 @@ def clerk_webhook():
         abort(500, str(e))
 
 
+@bp.route('/delete', methods=['POST'])
+def clerk_webhook_delete():
+    # Retrieve the Svix signature from the headers
+    headers = request.headers
+
+    # Retrieve the request body as a raw string
+    payload = request.get_data(as_text=True)
+
+    wh = Webhook(SVIX_SIGNUP_SECRET)
+
+    try:
+        payload = wh.verify(payload, headers)
+        user_id = payload["data"]["id"]
+
+        deleted_user = user_service.delete_user(user_id)
+        return jsonify({"status": "ok"}), 200
+
+    except UserAlreadyExistsError:
+        return abort(409, "User already exists")
+
+    except InternalServerError:
+        abort(500, "Internal Server Error")
+
+    except WebhookVerificationError:
+        print("Invalid Webhook signature from Clerk")
+        abort(401, "Invalid Webhook signature from Clerk")
+
+    except Exception as e:
+        print("Failed to process webhook:", e)
+        abort(500, str(e))
+
+
+@bp.route('/update', methods=['POST'])
+def clerk_webhook_update():
+    # Retrieve the Svix signature from the headers
+    headers = request.headers
+
+    # Retrieve the request body as a raw string
+    payload = request.get_data(as_text=True)
+
+    wh = Webhook(SVIX_SIGNUP_SECRET)
+
+    try:
+        payload = wh.verify(payload, headers)
+        user_id = payload["data"]["id"]
+
+        updated_user = user_service.update_user(user_id)
+        return jsonify({"status": "ok"}), 200
+
+    except UserAlreadyExistsError:
+        return abort(409, "User already exists")
+
+    except InternalServerError:
+        abort(500, "Internal Server Error")
+
+    except WebhookVerificationError:
+        print("Invalid Webhook signature from Clerk")
+        abort(401, "Invalid Webhook signature from Clerk")
+
+    except Exception as e:
+        print("Failed to process webhook:", e)
+        abort(500, str(e))
+
+
 @bp.route('/signup_2', methods=['POST'])
 def clerk_webhook_no_svix():
     try:
