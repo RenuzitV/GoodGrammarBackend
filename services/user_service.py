@@ -1,16 +1,23 @@
-from flask import jsonify, request
+import os
 
+from flask import jsonify, request
+from app import stripe
 from models.user_model import User
 from utils.Exceptions import UserAlreadyExistsError, InternalServerError, UserNotFoundError, InvalidRequestError
+import requests
 
 
-def create_user_by_id(user_id):
+def create_user_by_id_and_email(user_id, user_email):
     if User.objects(clerk_id=user_id).first():
         raise UserAlreadyExistsError("User already exists")
 
     try:
         created_user = User(clerk_id=user_id)
         created_user.save()
+        stripe.Customer.create(
+            id=user_id,
+            email=user_email
+        )
         return created_user
     except Exception as e:
         print("Failed to create user:", e)
@@ -71,3 +78,13 @@ def update_user(user_id):
         return user
     else:
         raise UserNotFoundError("User not found")
+
+
+def get_user_email(user_primary_email_id):
+    response = requests.get("https://api.clerk.dev/v1/email_addresses/" + user_primary_email_id,
+                            headers={os.getenv("CLERK_API_KEY")}
+                            )
+    if response.status_code == 200:
+        return response.json()["email_address"]
+    else:
+        raise InternalServerError("Internal Server Error")

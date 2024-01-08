@@ -9,10 +9,15 @@ from routes import auth_routes, clerk_routes, user_routes, file_route
 from database import db
 
 # setup env variables
+from stripe import init_stripe
+
 load_dotenv()
 
 # initialize database
 db = db.initialize_db()
+
+# initialize stripe
+stripe = init_stripe.init_stripe()
 
 # Generate Flask app
 app = Flask(__name__)
