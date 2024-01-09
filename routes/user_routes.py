@@ -21,8 +21,12 @@ def get_user(user_id):
         return jsonify({"error": str(e)}), 500
 
 
-#
-#
+@bp.route('', methods=['GET'])
+def get_all_users():
+    users = user_service.get_all_users()
+    users_dict = [user.to_mongo().to_dict() for user in users]
+    return jsonify(users_dict)
+
 # @bp.route('/<user_id>', methods=['DELETE'])
 # def delete_user(user_id):
 #     return user_service.delete_user(user_id)

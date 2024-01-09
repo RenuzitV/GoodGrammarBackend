@@ -71,13 +71,13 @@ def delete_user(user_id):
 
     deleted_user = User.objects(clerk_id=user_id).first()
 
-    try:
-        stripe.Customer.delete(deleted_user.stripe_id)
-    except Exception as e:
-        print("Failed to delete user:", e)
-        raise InternalServerError("Internal Server Error")
-
     if deleted_user:
+        try:
+            stripe.Customer.delete(deleted_user.stripe_id)
+        except Exception as e:
+            print("Failed to delete user from Stripe:", e)
+            raise InternalServerError("Internal Server Error")
+
         deleted_user.delete()
         return deleted_user
     else:
@@ -111,3 +111,7 @@ def get_user_email(user_primary_email_id):
         print(response.status_code)
         print(response.json())
         raise InternalServerError("Internal Server Error")
+
+
+def get_all_users():
+    return User.objects()
