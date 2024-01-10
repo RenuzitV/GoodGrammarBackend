@@ -10,5 +10,9 @@ class UserNotFoundError(Exception):
     pass
 
 
+class UserDoesNotHaveStripeIdError(Exception):
+    pass
+
+
 class InternalServerError(Exception):
     pass

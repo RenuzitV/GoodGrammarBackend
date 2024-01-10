@@ -4,7 +4,7 @@ import traceback
 from flask import jsonify, request
 import stripe
 from models.user_model import User
-from utils.Exceptions import UserAlreadyExistsError, InternalServerError, UserNotFoundError, InvalidRequestError
+from utils.exceptions import UserAlreadyExistsError, InternalServerError, UserNotFoundError, InvalidRequestError
 import requests
 
 
@@ -56,7 +56,6 @@ def create_user(user_id=None, user_email="", user_name=""):
 
 
 def get_user(user_id):
-    # Create a new user based on the form
     user = User.objects(clerk_id=user_id).first()
     if user:
         return user

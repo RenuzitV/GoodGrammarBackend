@@ -1,7 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, abort
 
 from services import user_service
-from utils.Exceptions import UserNotFoundError
+from utils.exceptions import UserNotFoundError
 
 bp = Blueprint('user', __name__)
 
@@ -16,9 +16,12 @@ def get_user(user_id):
         user = user_service.get_user(user_id)
         return user.to_json()
     except UserNotFoundError as e:
-        return jsonify({"error": str(e)}), 404
+        print("could not get user", user_id)
+        print("Error: ", e)
+        abort(404, "User not found")
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("Error: ", e)
+        abort(500, "Internal Server Error")
 
 
 @bp.route('', methods=['GET'])
