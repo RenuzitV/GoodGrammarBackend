@@ -16,3 +16,7 @@ class UserDoesNotHaveStripeIdError(Exception):
 
 class InternalServerError(Exception):
     pass
+
+
+class UserAlreadyHasSubscriptionError(Exception):
+    pass
