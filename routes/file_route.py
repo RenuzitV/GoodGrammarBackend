@@ -9,9 +9,11 @@ ALLOWED_EXTENSIONS = {'doc', 'docx'}
 
 API_URL = "https://polite-horribly-cub.ngrok-free.app/generate_code"
 
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @bp.route('/get_content', methods=['POST'])
 def get_file_content():
@@ -20,7 +22,7 @@ def get_file_content():
         print('No file part')
 
         return jsonify({'error': 'No file attached'}), 500
-    
+
     # Get the file
     file = request.files['file']
 
@@ -29,7 +31,7 @@ def get_file_content():
         print('No selected file')
 
         return jsonify({'respone': 'No selected file'}), 500
-    
+
     # If file valid and is allowed
     if file and allowed_file(file.filename):
         doc = docx.Document(file)
@@ -38,5 +40,5 @@ def get_file_content():
 
         for para in doc.paragraphs:
             fulltext.append(para.text)
-            
+
         return jsonify({'respone': '\n'.join(fulltext)})

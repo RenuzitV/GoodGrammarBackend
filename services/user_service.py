@@ -4,7 +4,7 @@ import traceback
 from flask import jsonify, request
 import stripe
 from models.user_model import User
-from utils.Exceptions import UserAlreadyExistsError, InternalServerError, UserNotFoundError, InvalidRequestError
+from utils.exceptions import UserAlreadyExistsError, InternalServerError, UserNotFoundError, InvalidRequestError
 import requests
 
 
@@ -34,29 +34,7 @@ def create_user(user_id=None, user_email="", user_name=""):
         raise InternalServerError("Internal Server Error")
 
 
-# def create_user():
-#     # Create a new user based on the form
-#     if not request.is_json:
-#         raise InvalidRequestError("Request is not JSON")
-#
-#     clerk_id = request.json.get("clerk_id", None)
-#     if not clerk_id:
-#         raise InvalidRequestError("clerk_id is required")
-#
-#     if User.objects(clerk_id=clerk_id).first():
-#         raise UserAlreadyExistsError("User already exists")
-#
-#     try:
-#         created_user = User(clerk_id=clerk_id)
-#         created_user.save()
-#         return created_user
-#     except Exception as e:
-#         print("Failed to create user:", e)
-#         raise InternalServerError("Internal Server Error")
-
-
 def get_user(user_id):
-    # Create a new user based on the form
     user = User.objects(clerk_id=user_id).first()
     if user:
         return user
@@ -71,13 +49,13 @@ def delete_user(user_id):
 
     deleted_user = User.objects(clerk_id=user_id).first()
 
-    try:
-        stripe.Customer.delete(deleted_user.stripe_id)
-    except Exception as e:
-        print("Failed to delete user:", e)
-        raise InternalServerError("Internal Server Error")
-
     if deleted_user:
+        try:
+            stripe.Customer.delete(deleted_user.stripe_id)
+        except Exception as e:
+            print("Failed to delete user from Stripe:", e)
+            raise InternalServerError("Internal Server Error")
+
         deleted_user.delete()
         return deleted_user
     else:
@@ -111,3 +89,34 @@ def get_user_email(user_primary_email_id):
         print(response.status_code)
         print(response.json())
         raise InternalServerError("Internal Server Error")
+
+
+def get_all_users():
+    return User.objects()
+
+
+# def create_user():
+#     # Create a new user based on the form
+#     if not request.is_json:
+#         raise InvalidRequestError("Request is not JSON")
+#
+#     clerk_id = request.json.get("clerk_id", None)
+#     if not clerk_id:
+#         raise InvalidRequestError("clerk_id is required")
+#
+#     if User.objects(clerk_id=clerk_id).first():
+#         raise UserAlreadyExistsError("User already exists")
+#
+#     try:
+#         created_user = User(clerk_id=clerk_id)
+#         created_user.save()
+#         return created_user
+#     except Exception as e:
+#         print("Failed to create user:", e)
+#         raise InternalServerError("Internal Server Error")
+def get_user_by_stripe_id(customer_id):
+    user = User.objects(stripe_id=customer_id).first()
+    if user:
+        return user
+    else:
+        raise UserNotFoundError("User not found")

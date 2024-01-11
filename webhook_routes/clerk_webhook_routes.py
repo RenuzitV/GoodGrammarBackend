@@ -5,7 +5,7 @@ from svix.exceptions import WebhookVerificationError
 from svix.webhooks import Webhook
 
 from services import user_service
-from utils.Exceptions import UserAlreadyExistsError
+from utils.exceptions import UserAlreadyExistsError
 
 SVIX_SIGNUP_SECRET = os.getenv("SVIX_SIGNUP_KEY")
 SVIX_DELETE_SECRET = os.getenv("SVIX_DELETE_KEY")

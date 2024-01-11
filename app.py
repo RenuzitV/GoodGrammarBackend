@@ -2,7 +2,10 @@ import os
 
 from flask import Flask
 from dotenv import load_dotenv
-from routes import auth_routes, clerk_routes, user_routes, file_route
+from flask_cors import CORS
+
+from routes import auth_routes, user_routes, file_route, stripe_routes
+from webhook_routes import clerk_webhook_routes, stripe_webhook_routes
 
 # do NOT remove thí import statement
 # it's needed to establish a connection to the database
@@ -17,16 +20,23 @@ load_dotenv()
 db = db.initialize_db()
 
 # initialize init_stripe
-stripe = init_stripe.init_stripe()
+init_stripe.init_stripe()
 
 # Generate Flask app
 app = Flask(__name__)
 
 # register blueprints and add prefix to its routes
 app.register_blueprint(auth_routes.bp, url_prefix='/')
-app.register_blueprint(clerk_routes.bp, url_prefix='/webhook/clerk')
+
+app.register_blueprint(clerk_webhook_routes.bp, url_prefix='/webhook/clerk')
+app.register_blueprint(stripe_webhook_routes.bp, url_prefix='/webhook/stripe')
+
 app.register_blueprint(user_routes.bp, url_prefix='/user')
 app.register_blueprint(file_route.bp, url_prefix='/file')
+app.register_blueprint(stripe_routes.bp, url_prefix='/stripe')
+
+# add CORS support for our frontend pages
+cors = CORS(app, resources={r"*": {"origins": "https://good-grammar.vercel.app/*"}})
 
 # run app if we're on development environment
 # otherwise, let the server handle it (e.g. Heroku)
