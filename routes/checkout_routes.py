@@ -1,14 +1,14 @@
-from flask import request, Blueprint, abort
+from flask import request, Blueprint, abort, jsonify
 
 from middleware.clerk_middleware import token_required
-from services.checkout_service import create_checkout
+import services.checkout_service as checkout_service
 from utils.exceptions import UserNotFoundError, UserDoesNotHaveStripeIdError
 from utils.token_utils import get_user_id
 
 bp = Blueprint('checkout', __name__)
 
 
-@bp.route('/', methods=['POST'])
+@bp.route('/create', methods=['POST'])
 @token_required
 def create_checkout_session(token):
     """
@@ -23,7 +23,8 @@ def create_checkout_session(token):
         abort(400, "Price ID is required")
 
     try:
-        create_checkout(user_id, data['price_id'])
+        checkout_session_url = checkout_service.create_checkout(user_id, data['price_id'])
+        return jsonify(checkout_session_url), 200
     except UserNotFoundError:
         print("could not get user ", user_id, " to create checkout")
         abort(404, "User not found")
