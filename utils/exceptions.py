@@ -1,3 +1,6 @@
+import traceback
+
+
 class InvalidRequestError(Exception):
     pass
 
@@ -19,4 +22,8 @@ class InternalServerError(Exception):
 
 
 class UserAlreadyHasSubscriptionError(Exception):
+    pass
+
+
+class NoActiveSubscriptionError(Exception):
     pass
