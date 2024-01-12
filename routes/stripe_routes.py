@@ -2,9 +2,11 @@ from flask import request, Blueprint, abort, jsonify
 
 import services.stripe_service as stripe_service
 from middleware.clerk_middleware import token_required
-from utils.exceptions import UserNotFoundError, UserDoesNotHaveStripeIdError, UserAlreadyHasSubscriptionError
+from services import user_service
+from utils.exceptions import UserNotFoundError, UserDoesNotHaveStripeIdError, UserAlreadyHasSubscriptionError, \
+    NoActiveSubscriptionError
 from utils.token_utils import get_user_id
-from middleware.stripe_middleware import subscription_required
+from middleware.stripe_middleware import authentication_and_subscription_required
 from models.subscription_tier_model import SubscriptionTier
 
 bp = Blueprint('checkout', __name__)
@@ -25,8 +27,8 @@ def create_checkout_session(token):
         abort(400, "Price ID is required")
 
     try:
-        checkout_session_url = stripe_service.create_checkout(user_id, data['price_id'])
-        return jsonify({"url": checkout_session_url}), 200
+        checkout_session_url, redirected = stripe_service.create_checkout(user_id, data['price_id'])
+        return jsonify({"url": checkout_session_url, "redirect_to_portal": redirected}), 200
     except UserNotFoundError:
         print("could not get user", user_id, "to create checkout")
         abort(404, "User not found")
@@ -64,6 +66,9 @@ def change_customer_subscription(token):
     except UserDoesNotHaveStripeIdError:
         print("User", user_id, "does not have a Stripe ID")
         abort(403, "User does not have a Stripe ID")
+    except NoActiveSubscriptionError:
+        print("User", user_id, "does not have an active subscription")
+        abort(403, "User does not have an active subscription")
     except Exception as e:
         print("Error: ", e)
         abort(500, "Internal Server Error")
@@ -86,8 +91,37 @@ def get_stripe_portal_url(token):
         abort(500, "Internal Server Error")
 
 
-@bp.route('/test_subscription_required', methods=['GET'])
-@token_required
-@subscription_required(SubscriptionTier.Expert)
-def test_subscription_required(token):
+@bp.route('/test_novice_subscription_required', methods=['GET'])
+@authentication_and_subscription_required(SubscriptionTier.Novice)
+def test_novice_subscription_required(token):
+    """
+    test function to see if the subscription middleware works
+    also provides some template code to get the user's id from the token
+
+    :param token: the user's token from the authentication_and_subscription_required decorator
+    """
+    user_id = get_user_id(token)
+
+    user = user_service.get_user(user_id)
+
+    print(user.to_json())
+
+    return jsonify({"message": token['sub']}), 200
+
+
+@bp.route('/test_expert_subscription_required', methods=['GET'])
+@authentication_and_subscription_required(SubscriptionTier.Expert)
+def test_expert_subscription_required(token):
+    """
+    test function to see if the subscription middleware works
+    also provides some template code to get the user's id from the token
+
+    :param token: the user's token from the authentication_and_subscription_required decorator
+    """
+    user_id = get_user_id(token)
+
+    user = user_service.get_user(user_id)
+
+    print(user.to_json())
+
     return jsonify({"message": token['sub']}), 200

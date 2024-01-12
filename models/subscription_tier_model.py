@@ -5,9 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class SubscriptionTier(enum.Enum):
-    Novice = [os.getenv("PRICE_NOVICE_MONTHLY_ID"), os.getenv("PRICE_NOVICE_YEARLY_ID")]
-    Expert = [os.getenv("PRICE_EXPERT_MONTHLY_ID"), os.getenv("PRICE_EXPERT_YEARLY_ID")]
+    Novice = "1"
+    Expert = "2"
 
     @property
     def price_ids(self):
