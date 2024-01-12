@@ -48,7 +48,7 @@ def get_file_content():
 
         return jsonify({'respone': '\n'.join(fulltext)})
     
-@app.route('/upload', methods=['POST'])
+@bp.route('/upload', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
         # Check if the post request has the file part
