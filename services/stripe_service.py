@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Any
 
 import stripe
 from dotenv import load_dotenv
@@ -33,13 +33,13 @@ def get_active_subscriptions(user: User) -> ListObject[Subscription]:
         raise e
 
 
-def create_checkout(user_id, price_id):
+def create_checkout(user_id, price_id) -> tuple[str, bool]:
     user = user_service.get_user(user_id)
 
     active_subscriptions = get_active_subscriptions(user)
     if len(active_subscriptions) > 0:
         print("User already has an active subscription, redirecting to billing portal")
-        return get_stripe_customer_portal_session(user_id)
+        return get_stripe_customer_portal_session(user_id).url, True
 
     try:
         checkout_session = stripe.checkout.Session.create(
@@ -56,7 +56,7 @@ def create_checkout(user_id, price_id):
             cancel_url=os.getenv('STRIPE_CANCEL_URL'),
         )
         print("successfully created checkout session: ", checkout_session.id)
-        return checkout_session.url
+        return checkout_session.url, False
     except Exception as e:
         print("Error when creating a checkout session: ", e)
         raise e
@@ -102,6 +102,10 @@ def change_subscription(user_id, price_id):
     user = user_service.get_user(user_id)
 
     active_subscriptions = get_active_subscriptions(user)
+
+    if len(active_subscriptions) == 0:
+        print("User does not have an active subscription")
+        raise NoActiveSubscriptionError("User does not have an active subscription")
 
     latest_subscription: Subscription = max(active_subscriptions, key=lambda sub: sub.created)
 
@@ -152,20 +156,61 @@ def get_customer_subscribe_item_id(user_id):
     return subscription_items.data[0].price.id
 
 
-# def check_if_user_has_correct_subscription(user_id, subscription_tier: SubscriptionTier):
-#     user = user_service.get_user(user_id)
-#
-#     active_subscriptions = get_active_subscriptions(user)
-#
-#     if len(active_subscriptions) == 0:
-#         raise NoActiveSubscriptionError("User does not have an active subscription")
-#
-#     if len(active_subscriptions) > 1:
-#         print("User has more than one active subscription")
-#         raise InternalServerError("User has more than one active subscription")
-#
-#     subscription_items = stripe.SubscriptionItem.list(
-#         subscription=active_subscriptions.data[0].id
-#     )
-#
-#     return subscription_items.data[0].price.id == subscription_tier.value
+def check_user_has_access_based_on_tier(user: User, tier: SubscriptionTier):
+    # Fetch user's active subscriptions from Stripe
+    subscriptions = stripe.Subscription.list(
+        customer=user.get_stripe_id(),
+        status='active')
+
+    if len(subscriptions) == 0:
+        print("User", user.get_id(), "does not have an active subscription")
+        return False
+
+    if len(subscriptions) > 1:
+        print("User", user.get_id(), "has more than one active subscription")
+        return False
+
+    subscription_items = stripe.SubscriptionItem.list(
+        subscription=subscriptions.data[0].id
+    )
+
+    if len(subscription_items) > 1:
+        print("User", user.get_id(), "has more than one subscription item, which is not supposed to happen")
+        return False
+
+    # check if metadata exists
+    plan = subscription_items.data[0].plan
+
+    if 'tier' not in plan.metadata:
+        print("Subscription", plan.id, "does not have a tier metadata")
+        raise InternalServerError("Subscription does not have a tier metadata")
+
+    subscription_tier_index = plan.metadata['tier']
+
+    if subscription_tier_index < tier.value:
+        print("User", user.get_id(), "does not have the required subscription tier")
+        return False
+
+    return True
+
+
+def get_subscription_details(user_id) -> dict[str, Any]:
+    user = user_service.get_user(user_id)
+
+    active_subscriptions = get_active_subscriptions(user)
+
+    if len(active_subscriptions) == 0:
+        raise NoActiveSubscriptionError("User does not have an active subscription")
+
+    if len(active_subscriptions) > 1:
+        print("User has more than one active subscription")
+        raise InternalServerError("User has more than one active subscription")
+
+    subscription_items = stripe.SubscriptionItem.list(
+        subscription=active_subscriptions.data[0].id
+    )
+
+    # fetch products from subscription items
+    # print(subscription_items)
+
+    return subscription_items.data[0].plan.metadata

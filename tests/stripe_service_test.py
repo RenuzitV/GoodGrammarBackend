@@ -24,11 +24,11 @@ class MyTestCase(unittest.TestCase):
         clerk_id = os.getenv("CLERK_TEST_USER_ID")
 
         stripe_service.change_subscription(clerk_id, price_id_1)
-        self.assertEqual(get_customer_subscribe_item_id(clerk_id), price_id_1)  # add assertion here
+        self.assertEqual(get_customer_subscribe_item_id(clerk_id), price_id_1)
         stripe_service.change_subscription(clerk_id, price_id_2)
-        self.assertEqual(get_customer_subscribe_item_id(clerk_id), price_id_2)  # add assertion here
+        self.assertEqual(get_customer_subscribe_item_id(clerk_id), price_id_2)
         stripe_service.change_subscription(clerk_id, price_id_3)
-        self.assertEqual(get_customer_subscribe_item_id(clerk_id), price_id_3)  # add assertion here
+        self.assertEqual(get_customer_subscribe_item_id(clerk_id), price_id_3)
 
 
 if __name__ == '__main__':

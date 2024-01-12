@@ -21,7 +21,13 @@ def test_auth(token):
     :return: authorized message and claims from JWT token
     """
     # does not need to check for authorization in this function. if we get here, it means that the token is valid
-    print(token['primary_email'])
+    email = token['primary_email']
+
+    if email is not None:
+        print("Authorized as", email)
+    else:
+        print("Authorized as", token['sub'])
+
     return jsonify({
         "message": "Authorized",
         "data": token

@@ -6,9 +6,10 @@ from dotenv import load_dotenv
 from flask import request, jsonify, abort
 import stripe
 from models.subscription_tier_model import SubscriptionTier
-from services import user_service
+from services import user_service, stripe_service
+from utils.exceptions import InternalServerError
 
-from utils.token_utils import get_user_id
+from utils.token_utils import get_user_id, validate_token
 
 load_dotenv()
 
@@ -16,44 +17,48 @@ load_dotenv()
 api_key = os.getenv("CLERK_API_KEY")
 
 
-def subscription_required(required_tier: SubscriptionTier):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(token, *args, **kwargs):
-            user_id = get_user_id(token)
+def authentication_and_subscription_required(required_tier: SubscriptionTier):
+    """
+    Decorator that checks if the user is authenticated and has the required subscription tier.
 
-            if not user_id:
-                return jsonify({"message": "User ID is missing"}), 401
+    Can be either `SubscriptionTier.Novice` or
+    `SubscriptionTier.Expert`.
+
+    Novice is lower than Expert.
+    :param required_tier: The required subscription tier.
+    """
+    def decorator(f):
+        # noinspection DuplicatedCode
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            token = None
+            if "Authorization" in request.headers:
+                token = request.headers["Authorization"].split(" ")[1]
+
+            data, error_response = validate_token(token)
+            if error_response:
+                return {
+                    "message": error_response["message"]
+                }, error_response["status"]
+
+            user_id = get_user_id(data)
+
+            user = user_service.get_user(user_id)
 
             try:
-                user = user_service.get_user(user_id)
+                user_has_subscription = stripe_service.check_user_has_access_based_on_tier(user, required_tier)
+            except InternalServerError:
+                return {
+                    "message": "Internal Server Error"
+                }, 500
 
-                # Fetch user's active subscriptions from Stripe
-                subscriptions = stripe.Subscription.list(
-                    customer=user.get_stripe_id(),
-                    status='active')
-
-                # Get all subscription items from these subscriptions
-                subscription_items_lists = [stripe.SubscriptionItem.list(subscription=subscription.id).data for
-                                            subscription in subscriptions]
-
-                # Flatten the list of subscription items
-                flattened_subscription_items = [item for sublist in subscription_items_lists for item in sublist]
-
-                # Extract the price IDs from the flattened list
-                subscription_items_price_ids = [item.price.id for item in flattened_subscription_items]
-
-                # Check if the user does not have any of the required subscription tier's price IDs
-                if not any(item in subscription_items_price_ids for item in required_tier.value):
-                    return jsonify({"message": "User does not have the required subscription tier"}), 403
-
-            except Exception as e:
-                # Handle exceptions (e.g., Stripe API errors, user not found)
-                print(e)
-                return jsonify({"message": "Internal Server Error"}), 500
+            if not user_has_subscription:
+                return {
+                    "message": "User does not have the required subscription tier",
+                }, 403
 
             # Proceed with the original function
-            return f(token, *args, **kwargs)
+            return f(data, *args, **kwargs)
 
         return decorated_function
 
