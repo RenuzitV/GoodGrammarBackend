@@ -36,7 +36,7 @@ app.register_blueprint(file_route.bp, url_prefix='/file')
 app.register_blueprint(stripe_routes.bp, url_prefix='/stripe')
 
 # add CORS support for our frontend pages
-cors = CORS(app, resources={r"*": {"origins": "https://good-grammar.vercel.app/*"}})
+cors = CORS(app, resources={r"*": {"origins": ["https://good-grammar.vercel.app/*", "https://localhost/*", "http://localhost/*"]}})
 
 # run app if we're on development environment
 # otherwise, let the server handle it (e.g. Heroku)
