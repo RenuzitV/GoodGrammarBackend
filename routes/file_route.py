@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 
 import docx
 import requests
@@ -6,6 +6,7 @@ import io
 from bson.binary import Binary
 from werkzeug.utils import secure_filename
 from services.file_service import save_file
+from models.file_model import FileObject
 
 bp = Blueprint('file', __name__)
 
@@ -71,6 +72,9 @@ def upload_file():
             encoded = Binary(file.read())
 
             myDoc = save_file(filename=filename, encodedBinFile=encoded)
+
+            # Save the id of original doc
+            uploadID = myDoc.id
 
             gotFile = myDoc["file"]
 
@@ -152,7 +156,49 @@ def upload_file():
 
             myDoc = save_file(filename=filename.split(".")[0] + "(edited).docx", encodedBinFile=encoded)
 
-    return jsonify({'respone': 'Received file ' + "filename"})
+    return jsonify(
+        {
+            'upload_file_id': str(uploadID),
+            'edited_file_id': str(myDoc.id)
+            }
+        )
+
+@bp.route('/get_file_info', methods=['POST'])
+def get_file_info():
+    fileId = request.json['file_id']
+
+    result = FileObject.objects(pk=fileId).first()
+
+    return jsonify(
+        {
+            'file_name': str(result["file_name"]),
+            'create_at': str(result["created_at"])
+            }
+        )
+
+@bp.route('/get_file', methods=['POST'])
+def get_file():
+    fileId = request.json['file_id']
+
+    result = FileObject.objects(pk=fileId).first()
+
+    gotFile = result["file"]
+
+    binaryStream2 = io.BytesIO(gotFile)
+
+    myDocument = docx.Document(binaryStream2)
+
+    f = io.BytesIO()
+    myDocument.save(f)
+    f.seek(0)
+
+    filename = str(result["file_name"])
+
+    return send_file(
+        f, 
+        as_attachment=True,
+        download_name=filename,
+        )
 
 def allowed_file(filename):
     return '.' in filename and \
