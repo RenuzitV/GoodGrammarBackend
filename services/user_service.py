@@ -96,6 +96,9 @@ def get_all_users():
 
 
 def add_file_to_history(user_id, file_id):
+    print(file_id)
+    # print type of file_id
+    print(type(file_id))
     user = User.objects(clerk_id=user_id).first()
     if user:
         user.user_history.append(file_id)
@@ -103,7 +106,7 @@ def add_file_to_history(user_id, file_id):
         return user
     else:
         raise UserNotFoundError("User not found")
-    
+
 
 def get_history(user_id):
     user = User.objects(clerk_id=user_id).first()
@@ -111,8 +114,6 @@ def get_history(user_id):
         return user.get_history()
     else:
         raise UserNotFoundError("User not found")
-
-
 
 
 # def create_user():
