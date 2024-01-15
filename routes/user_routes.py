@@ -72,7 +72,7 @@ def get_user_subscription_tier(token):
         abort(500, "Internal Server Error")
 
 
-@bp.route('add_file', methods=['POST'])
+@bp.route('history', methods=['POST'])
 @token_required
 def add_file(token):
     fileId = request.args.get('fileId')
@@ -89,7 +89,7 @@ def add_file(token):
         abort(500, "Internal Server Error")
 
 
-@bp.route('get_history', methods=['GET'])
+@bp.route('history', methods=['GET'])
 @token_required
 def get_files(token):
     try:
