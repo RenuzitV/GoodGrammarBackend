@@ -17,7 +17,12 @@ bp = Blueprint('clerk', __name__)
 def get_user_info_from_payload(payload):
     user_id = payload["data"]["id"]
     user_primary_email_id = payload["data"]["primary_email_address_id"]
-    user_name = payload["data"]["first_name"] + " " + payload["data"]["last_name"]
+    user_name = payload["data"]["first_name"]
+
+    if user_name is None and payload["data"]["last_name"] is not None:
+        user_name = payload["data"]["last_name"]
+    else:
+        user_name = "John Doe"
 
     user_email = user_service.get_user_email(user_primary_email_id)
     return user_id, user_email, user_name
