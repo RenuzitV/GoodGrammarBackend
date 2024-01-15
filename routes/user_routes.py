@@ -75,7 +75,7 @@ def get_user_subscription_tier(token):
 @bp.route('history', methods=['POST'])
 @token_required
 def add_file(token):
-    fileId = request.args.get('fileId')
+    fileId = request.form.get('fileId')
     try:
         userId = get_user_id(token)
         user = user_service.add_file_to_history(userId, fileId)
