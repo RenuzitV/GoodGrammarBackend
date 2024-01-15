@@ -96,9 +96,6 @@ def get_all_users():
 
 
 def add_file_to_history(user_id, file_id):
-    print(file_id)
-    # print type of file_id
-    print(type(file_id))
     user = User.objects(clerk_id=user_id).first()
     if user:
         user.user_history.append(file_id)
