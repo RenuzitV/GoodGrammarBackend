@@ -95,6 +95,26 @@ def get_all_users():
     return User.objects()
 
 
+def add_file_to_history(user_id, file_id):
+    user = User.objects(clerk_id=user_id).first()
+    if user:
+        user.user_history.append(file_id)
+        user.save()
+        return user
+    else:
+        raise UserNotFoundError("User not found")
+    
+
+def get_history(user_id):
+    user = User.objects(clerk_id=user_id).first()
+    if user:
+        return user.get_history()
+    else:
+        raise UserNotFoundError("User not found")
+
+
+
+
 # def create_user():
 #     # Create a new user based on the form
 #     if not request.is_json:

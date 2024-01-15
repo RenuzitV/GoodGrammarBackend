@@ -71,6 +71,40 @@ def get_user_subscription_tier(token):
         print("Error: ", e)
         abort(500, "Internal Server Error")
 
+
+@bp.route('add_file', methods=['POST'])
+@token_required
+def add_file(token):
+    fileId = request.args.get('fileId')
+    try:
+        userId = get_user_id(token)
+        user = user_service.add_file_to_history(userId, fileId)
+        return user.to_json(), 200
+    except UserNotFoundError as e: 
+        print("could not get user", userId)
+        print("Error: ", e)
+        abort(404, "User not found")
+    except Exception as e:
+        print("Error: ", e)
+        abort(500, "Internal Server Error")
+
+
+@bp.route('get_history', methods=['GET'])
+@token_required
+def get_files(token):
+    try:
+        userId = get_user_id(token)
+        history = user_service.get_history(userId)
+        return history, 200
+    except UserNotFoundError as e: 
+        print("could not get user", userId)
+        print("Error: ", e)
+        abort(404, "User not found")
+    except Exception as e:
+        print("Error: ", e)
+        abort(500, "Internal Server Error")
+
+
 # @bp.route('/<user_id>', methods=['DELETE'])
 # def delete_user(user_id):
 #     return user_service.delete_user(user_id)
