@@ -5,6 +5,9 @@ import requests
 from dotenv import load_dotenv
 from flask import abort
 from jose import jwt
+from jwt import InvalidTokenError
+
+from utils.exceptions import *
 
 load_dotenv()
 
@@ -35,7 +38,7 @@ def decode_jwt(token):
     """
     if not api_key:
         print("Clerk API Key is missing!")
-        abort(500, "Something went wrong. Please contact support")
+        raise NoBearerTokenError("Clerk API Key is missing!")
 
     jwks = get_jwks(api_key)
 
@@ -46,7 +49,8 @@ def decode_jwt(token):
 
     # check if key has at least one element
     if not key:
-        abort(401, "Invalid Token!")
+        print("Invalid token")
+        raise InvalidTokenError("Invalid token")
 
     key = key[0]
 

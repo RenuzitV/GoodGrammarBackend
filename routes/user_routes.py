@@ -46,11 +46,13 @@ def get_all_users():
 @token_required
 def get_user_subscription_tier(token):
     FREE_TIER = jsonify({
-                "tier": "0",
-                "interval": "month",
-                "name": "Free"
-            })
+        "tier": "0",
+        "interval": "month",
+        "name": "Free"
+    })
+
     user_id = get_user_id(token)
+
     try:
         tier = stripe_service.get_subscription_details(user_id)
 
@@ -75,13 +77,17 @@ def get_user_subscription_tier(token):
 @bp.route('history', methods=['POST'])
 @token_required
 def add_file(token):
+    userId = ""
     data = request.get_json()
     fileId = data.get("fileId")
     try:
         userId = get_user_id(token)
-        user = user_service.add_file_to_history(userId, fileId)
-        return user.to_json(), 200
-    except UserNotFoundError as e: 
+        user_service.add_file_to_history(userId, fileId)
+        return jsonify({
+            "status": "ok",
+            "fileId": fileId,
+        }), 200
+    except UserNotFoundError as e:
         print("could not get user", userId)
         print("Error: ", e)
         abort(404, "User not found")
@@ -97,14 +103,13 @@ def get_files(token):
         userId = get_user_id(token)
         history = user_service.get_history(userId)
         return history, 200
-    except UserNotFoundError as e: 
+    except UserNotFoundError as e:
         print("could not get user", userId)
         print("Error: ", e)
         abort(404, "User not found")
     except Exception as e:
         print("Error: ", e)
         abort(500, "Internal Server Error")
-
 
 # @bp.route('/<user_id>', methods=['DELETE'])
 # def delete_user(user_id):

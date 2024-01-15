@@ -27,3 +27,7 @@ class UserAlreadyHasSubscriptionError(Exception):
 
 class NoActiveSubscriptionError(Exception):
     pass
+
+
+class NoBearerTokenError(Exception):
+    pass
