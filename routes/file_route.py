@@ -69,20 +69,7 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
 
-            encoded = Binary(file.read())
-
-            myDoc = save_file(filename=filename, encodedBinFile=encoded)
-
-            # Save the id of original doc
-            uploadID = myDoc.id
-
-            gotFile = myDoc["file"]
-
-            binaryStream = io.BytesIO(gotFile)
-
-            resultDoc = docx.Document(binaryStream)
-
-            # resultDoc = docx.Document(savedPath)
+            resultDoc = docx.Document(file)
 
             paragraphs = resultDoc.paragraphs
 
@@ -158,27 +145,38 @@ def upload_file():
 
     return jsonify(
         {
-            'upload_file_id': str(uploadID),
             'edited_file_id': str(myDoc.id)
-            }
-        )
+        }
+    )
 
-@bp.route('/get_file_info', methods=['POST'])
+@bp.route('/get_file_info', methods=['GET'])
 def get_file_info():
-    fileId = request.json['file_id']
+    fileId = request.args.get('file_id')
 
     result = FileObject.objects(pk=fileId).first()
+
+    gotFile = result["file"]
+
+    binaryStream2 = io.BytesIO(gotFile)
+
+    myDocument = docx.Document(binaryStream2)
+
+    fulltext = []
+
+    for para in myDocument.paragraphs:
+        fulltext.append(para.text)
 
     return jsonify(
         {
             'file_name': str(result["file_name"]),
-            'create_at': str(result["created_at"])
-            }
-        )
+            'create_at': str(result["created_at"]),
+            'content': '\n'.join(fulltext)
+        }
+    )
 
-@bp.route('/get_file', methods=['POST'])
+@bp.route('/get_file', methods=['GET'])
 def get_file():
-    fileId = request.json['file_id']
+    fileId = request.args.get('file_id')
 
     result = FileObject.objects(pk=fileId).first()
 
