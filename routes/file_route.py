@@ -36,7 +36,7 @@ def get_file_content():
     if file.filename == '':
         print('No selected file')
 
-        return jsonify({'respone': 'No selected file'}), 500
+        return jsonify({'error': 'No selected file'}), 500
 
     # If file valid and is allowed
     if file and allowed_file(file.filename):
@@ -47,7 +47,7 @@ def get_file_content():
         for para in doc.paragraphs:
             fulltext.append(para.text)
 
-        return jsonify({'respone': '\n'.join(fulltext)})
+        return jsonify({'response': '\n'.join(fulltext)})
     
 @bp.route('/upload', methods=['POST'])
 def upload_file():
@@ -56,7 +56,7 @@ def upload_file():
         if 'file' not in request.files:
             print('No file part')
 
-            return jsonify({'respone': 'No file attached'})
+            return jsonify({'error': 'No file attached'})
         
         file = request.files['file']
 
@@ -64,7 +64,7 @@ def upload_file():
         if file.filename == '':
             print('No selected file')
 
-            return jsonify({'respone': 'No selected file'})
+            return jsonify({'error': 'No selected file'})
         
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
