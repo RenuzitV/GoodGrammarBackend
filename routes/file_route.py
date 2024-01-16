@@ -168,7 +168,7 @@ def get_file_info():
 
     return jsonify(
         {
-            'file_id':str(result["file_id"]),
+            'file_id':str(result["id"]),
             'file_name': str(result["file_name"]),
             'create_at': str(result["created_at"]),
             'content': '\n'.join(fulltext)
