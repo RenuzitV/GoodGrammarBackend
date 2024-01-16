@@ -111,6 +111,21 @@ def get_files(token):
         print("Error: ", e)
         abort(500, "Internal Server Error")
 
-# @bp.route('/<user_id>', methods=['DELETE'])
-# def delete_user(user_id):
-#     return user_service.delete_user(user_id)
+
+@bp.route('history/<file_id>', methods=['DELETE'])
+@token_required
+def delete_file(token, file_id):
+    try:
+        userId = get_user_id(token)
+        user_service.delete_file_from_history(userId, file_id)
+        return jsonify({
+            "status":"ok",
+            "fileId":file_id,
+        }), 200
+    except UserNotFoundError as e:
+        print("could not get user", userId)
+        print("Error: ", e)
+        abort(404, "User not found")
+    except Exception as e:
+        print("Error: ", e)
+        abort(500, "Internal Server Error")

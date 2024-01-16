@@ -116,6 +116,16 @@ def get_history(user_id):
         raise UserNotFoundError("User not found")
 
 
+def delete_file_from_history(user_id, file_id):
+
+    user = User.objects(clerk_id=user_id).first()
+    if user:
+        user.user_history.remove(file_id)
+        user.save()
+        return user
+    else:
+        raise UserNotFoundError("User not found")
+
 # def create_user():
 #     # Create a new user based on the form
 #     if not request.is_json:
