@@ -212,7 +212,7 @@ def call_API(text):
 
     result = ""
 
-    prompts.append("Correct English and do not additional text: " + text + "Here is the corrected version:")
+    prompts.append("Correct English: " + text + "Here is the corrected version:")
 
     param = []
 
