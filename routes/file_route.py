@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, send_file
 import docx
 import requests
 import io
+import re
 from bson.binary import Binary
 from werkzeug.utils import secure_filename
 from services.file_service import save_file
@@ -125,9 +126,10 @@ def upload_file():
                                 splitted_paragraphs.append(cur_para)
 
                             for splitted_para in splitted_paragraphs:
-                                # call_API(splitted_para)
-
-                                row.text = ''.join(splitted_para)
+                                if (re.search(r'[a-zA-Z]+', splitted_para)):
+                                    row.text = call_API(splitted_para)
+                                else:
+                                    row.text = ''.join(splitted_para)
                         
                         else:
                             row.text = content
@@ -141,7 +143,7 @@ def upload_file():
 
             encoded = Binary(binaryStream1.read())
 
-            myDoc = save_file(filename=filename.split(".")[0] + "(edited).docx", encodedBinFile=encoded)
+            myDoc = save_file(filename=filename.split(".")[0] + "-fixed.docx", encodedBinFile=encoded)
 
     return jsonify(
         {
@@ -210,10 +212,7 @@ def call_API(text):
 
     result = ""
 
-    # for sentence in splitKeepDelimiter(text, "."):
-    #     prompts.append("Correct English: " + sentence + "Here is the corrected version")
-
-    prompts.append("Correct English and do not additional text: " + text + "Here is the corrected version:")
+    prompts.append("Correct English: " + text + "Here is the corrected version:")
 
     param = []
 
@@ -223,18 +222,17 @@ def call_API(text):
 
     response = requests.get(API_URL, params=param)
 
-    # print(param)
-
     if response.status_code == 200:
         generated_code_list = response.json()
         for i, code in enumerate(generated_code_list):
 
             print("After: " + transform_result(text, code) + "\n\n")
-            # result += code
 
-            # return jsonify({'respone': response.json()})
+            return transform_result(text, code)
     else:
         print("Failed to retrieve code. Status code:", response.status_code)
+
+        return "[Failed to correct: " + text
 
 def transform_result(s1, s2):
     result_str = ""
