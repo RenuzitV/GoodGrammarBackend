@@ -59,8 +59,8 @@ def get_file_content():
 
 
 @bp.route('/upload', methods=['POST'])
-@token_required
-# @authentication_and_subscription_threshold_required()
+# @token_required
+@authentication_and_subscription_threshold_required()
 def upload_file(token):
     # Check if the post request has the file part
     if 'file' not in request.files:
@@ -232,8 +232,8 @@ def clean_text(text):
 
 def call_API_group(texts):
     # Find the longest string (word-wise) in the list, and multiply by 1.1 to account for any
-    # extra characters the promt adds
-    max_length = int(max(len(text.split()) for text in texts) * 1.1)
+    # extra characters the prompt adds
+    max_length = 10000
     processed_texts = []
     prompts = []
     param = []
@@ -245,7 +245,7 @@ def call_API_group(texts):
 
     for text in texts:
         # Check if the text contains alphabetic characters
-        if re.search("[a-zA-Z]", text) and len(text) < max_length:
+        if re.search("[a-zA-Z]", text):
             prompts.append(prepend_text + text + append_text)
             valid_for_api.append(True)
         else:
