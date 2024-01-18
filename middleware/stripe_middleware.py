@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from flask import request, jsonify, abort
 import stripe
 from models.subscription_tier_model import SubscriptionTier
-from services import user_service, stripe_service
+from services import user_service, stripe_service, file_service
 from utils.exceptions import InternalServerError
 
 from utils.token_utils import get_user_id, validate_token
@@ -65,7 +65,7 @@ def authentication_and_subscription_required(required_tier: SubscriptionTier):
     return decorator
 
 
-def authentication_and_subscription_threshold_required(s):
+def authentication_and_subscription_threshold_required():
     """
     Decorator that checks if the user is authenticated and their subscription tier can has not reached the upload threshold.
     """
@@ -85,18 +85,29 @@ def authentication_and_subscription_threshold_required(s):
 
             user_id = get_user_id(data)
 
-            user = user_service.get_user(user_id)
+            # Get the file
+            file = request.files['file']
+
+            if file.filename == '':
+                print('No file')
+
+                return jsonify({'error': 'No file'}), 401
+
+            # If file valid and is allowed
+            if file is None or file.filename.rsplit('.', 1)[1].lower() not in ["docx"]:
+                return jsonify({'error': 'Invalid file type'}), 401
 
             try:
-                user_has_subscription = stripe_service.check_user_has_access_based_on_tier(user, required_tier)
-            except InternalServerError:
+                has_access, message = file_service.check_user_has_access_based_on_threshold_and_wordcount(user_id, file)
+            except InternalServerError as e:
+                print("Internal Server Error while checking user threshold and file wordcount" + str(e))
                 return {
                     "message": "Internal Server Error"
                 }, 500
 
-            if not user_has_subscription:
+            if has_access is False:
                 return {
-                    "message": "User does not have the required subscription tier",
+                    "message": message,
                 }, 403
 
             # Proceed with the original function
