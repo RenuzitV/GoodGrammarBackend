@@ -107,16 +107,15 @@ def add_file_to_history(user_id, file_id):
 
 
 def get_history(user_id):
-
     user = User.objects(clerk_id=user_id).first()
-    
+
     if user:
         detailed_history = []
         fileId_history = user.get_history()
         for fileId in fileId_history:
             result = FileObject.objects(pk=fileId).first()
             detailed_history.append({
-                'file_id':fileId,
+                'file_id': fileId,
                 'file_name': str(result["file_name"]),
                 'create_at': str(result["created_at"]),
             })
@@ -127,7 +126,6 @@ def get_history(user_id):
 
 
 def delete_file_from_history(user_id, file_id):
-
     user = User.objects(clerk_id=user_id).first()
     if user:
         user.user_history.remove(file_id)
@@ -135,6 +133,7 @@ def delete_file_from_history(user_id, file_id):
         return user
     else:
         raise UserNotFoundError("User not found")
+
 
 # def create_user():
 #     # Create a new user based on the form

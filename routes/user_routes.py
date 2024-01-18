@@ -46,6 +46,7 @@ def get_all_users():
 @token_required
 def get_user_subscription_tier(token):
     FREE_TIER = jsonify({
+        "subscription_id": "0",
         "tier": "0",
         "interval": "month",
         "name": "Free"

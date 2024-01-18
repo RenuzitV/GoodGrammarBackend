@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify, send_file
+from docx import Document
+from flask import Blueprint, request, jsonify, send_file, abort
 
 import docx
 import requests
@@ -6,13 +7,18 @@ import io
 import re
 from bson.binary import Binary
 from werkzeug.utils import secure_filename
+
+from middleware.clerk_middleware import token_required
+from services import user_service
 from services.file_service import save_file
 from models.file_model import FileObject
+from utils.exceptions import UserNotFoundError
+from utils.token_utils import get_user_id
 
 bp = Blueprint('file', __name__)
 
 UPLOAD_FOLDER = 'files'
-ALLOWED_EXTENSIONS = {'doc', 'docx'}
+ALLOWED_EXTENSIONS = {'docx'}
 
 API_URL = "https://polite-horribly-cub.ngrok-free.app/generate_code"
 
@@ -49,107 +55,109 @@ def get_file_content():
             fulltext.append(para.text)
 
         return jsonify({'response': '\n'.join(fulltext)})
-    
+
+
 @bp.route('/upload', methods=['POST'])
-def upload_file():
-    if request.method == 'POST':
-        # Check if the post request has the file part
-        if 'file' not in request.files:
-            print('No file part')
+@token_required
+def upload_file(token):
+    # Check if the post request has the file part
+    if 'file' not in request.files:
+        print('No file part')
 
-            return jsonify({'error': 'No file attached'})
-        
-        file = request.files['file']
+        return jsonify({'error': 'No file attached'})
 
-        # if user does not select file, browser also submit an empty part without filename
-        if file.filename == '':
-            print('No selected file')
+    file = request.files['file']
 
-            return jsonify({'error': 'No selected file'})
-        
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
+    # if user does not select file, browser also submit an empty part without filename
+    if file.filename == '':
+        print('No selected file')
 
-            resultDoc = docx.Document(file)
+        return jsonify({'error': 'No selected file'})
 
-            paragraphs = resultDoc.paragraphs
+    if file is None or allowed_file(file.filename) is False:
+        return jsonify({'error': 'Invalid file type'})
 
-            # Ieterate through each paragraph
-            for i in range(0, len(paragraphs)):
-                para = paragraphs[i]
+    filename = secure_filename(file.filename)
 
-                # Skip the reference
-                if is_heading(para) and para.text.lower() == "references":
-                    print("Found")
-                    break
+    resultDoc: Document = docx.Document(file)
 
-                # If the current paragraph is not heading and not a blank
-                if not is_heading(para) and para.text != "":
-                    # Iterate through each run of the paragraph
-                    for row in para.runs:
-                        # Store the content of the run
-                        content = row.text 
+    paragraphs = resultDoc.paragraphs
 
-                        # Removing all its content.
-                        # Run-level formatting, such as style, is preserved.
-                        row.clear()
+    # Iterate through each paragraph
+    for para in paragraphs:
 
-                        # Split the whole paragraph tosentences
-                        if content.find(".") != -1:
-                            sentences = splitKeepDelimiter(content, ".")
+        # Skip the reference
+        if is_heading(para) and para.text.lower() == "references":
+            print("Found")
+            break
 
-                            # Store small paragraphs have maximum 128 words
-                            splitted_paragraphs = []
+        # If the current paragraph is not heading and not a blank
+        if is_heading(para) or para.text == "":
+            continue
 
-                            # Store the current paragraph for splitting
-                            cur_para = ""
+        if len(para.runs) == 0 or para.runs[0].text == "" or para.text == "":
+            continue
 
-                            # Iterate through each sentences int the paragraph
-                            for sentence in sentences:
-                                if (sentence == ""):
-                                    continue
+        # Store the first run's formatting
+        first_run = para.runs[0]
+        font_name = first_run.font.name
+        font_size = first_run.font.size
+        font_bold = first_run.bold
+        font_italic = first_run.italic
+        font_underline = first_run.underline
+        font_color = first_run.font.color.rgb
 
-                                # Check if the length after adding sentence to paragraph is grater than 128 words or not
-                                if (len(cur_para.split()) + len(sentence.split()) ) > 128:
-                                    # If larger add current paragraph to list
-                                    splitted_paragraphs.append(cur_para)
+        paragraph_text = ""
+        # Aggregate text for the entire paragraph
+        for run in para.runs:
+            paragraph_text += run.text
 
-                                    # Reset the current paragraph to the current sentence
-                                    cur_para = sentence
+        texts = splitKeepDelimiter(paragraph_text)
 
-                                else:
-                                    cur_para += sentence
-                        
-                            # Finish iteration and the current paragraph is not empty
-                            if cur_para:
-                                # Add the current paragrpah to the list
-                                splitted_paragraphs.append(cur_para)
+        # Call the API for language correction on the entire paragraph
+        corrected_paragraph = call_API_group(texts)
 
-                            for splitted_para in splitted_paragraphs:
-                                if (re.search(r'[a-zA-Z]+', splitted_para)):
-                                    row.text = call_API(splitted_para)
-                                else:
-                                    row.text = ''.join(splitted_para)
-                        
-                        else:
-                            row.text = content
+        # Clear the paragraph and insert the corrected text with the first run's
+        para.runs.clear()
+        new_run = para.add_run(corrected_paragraph)
+        new_run.font.name = font_name
+        new_run.font.size = font_size
+        new_run.bold = font_bold
+        new_run.italic = font_italic
+        new_run.underline = font_underline
+        if font_color:
+            new_run.font.color.rgb = font_color
 
-            # Save the edited document to mongodb
-            binaryStream1 = io.BytesIO()
+    # Save the edited document to mongodb
+    binaryStream1 = io.BytesIO()
 
-            resultDoc.save(binaryStream1)
+    resultDoc.save(binaryStream1)
 
-            binaryStream1.seek(0)
+    binaryStream1.seek(0)
 
-            encoded = Binary(binaryStream1.read())
+    encoded = Binary(binaryStream1.read())
 
-            myDoc = save_file(filename=filename.split(".")[0] + "-fixed.docx", encodedBinFile=encoded)
+    myDoc = save_file(filename=filename.split(".")[0] + "-fixed.docx", encodedBinFile=encoded)
+
+    userId = ""
+
+    try:
+        userId = get_user_id(token)
+        user_service.add_file_to_history(userId, str(myDoc.id))
+    except UserNotFoundError as e:
+        print("could not get user", userId)
+        print("Error: ", e)
+        abort(404, "User not found")
+    except Exception as e:
+        print("Error: ", e)
+        abort(500, "Internal Server Error")
 
     return jsonify(
         {
             'edited_file_id': str(myDoc.id)
         }
     )
+
 
 @bp.route('/get_file_info', methods=['GET'])
 def get_file_info():
@@ -196,14 +204,74 @@ def get_file():
     filename = str(result["file_name"])
 
     return send_file(
-        f, 
+        f,
         as_attachment=True,
         download_name=filename,
-        )
+    )
+
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def clean_text(text):
+    # Regular expression to find the first occurrence of ".", "!", "?", or newline
+    match = re.search(r"[.!?](?=\s|$)|[\n\r]", text)
+
+    if match:
+        # Return the substring up to and including the first matched character
+        return text[:match.end()]
+    else:
+        # If no such character is found, return the original text
+        return text
+
+
+def call_API_group(texts):
+    max_length = 256
+    processed_texts = []
+    prompts = []
+    param = []
+    valid_for_api = []  # check if we should call the API for this text
+    # prepend_text = "correct english, no asking, simple answer, only response, keep formatting, no spaces: "
+    prepend_text = "Correct English in the following text: "
+    # append_text = " Here is the correct version:"
+    append_text = ""
+
+    for text in texts:
+        # Check if the text contains alphabetic characters
+        if re.search("[a-zA-Z]", text) and len(text) < max_length:
+            prompts.append(prepend_text + text + append_text)
+            valid_for_api.append(True)
+        else:
+            valid_for_api.append(False)
+
+    if prompts:
+        param += [("max_length", max_length)]
+        param += [("prompts", prompt) for prompt in prompts]
+
+        response = requests.get(API_URL, params=param)
+
+        if response.status_code == 200:
+            body = response.json()
+            prompt_index = 0  # To track the index in prompts
+            for i, call_api in enumerate(valid_for_api):
+                if call_api:
+                    corrected_text = clean_text(body[prompt_index].strip())
+                    # print("before: ", texts[i])
+                    # print("After: ", corrected_text, "\n\n")
+                    processed_texts.append(corrected_text)
+                    prompt_index += 1
+                else:
+                    processed_texts.append(texts[i])
+        else:
+            # print("Failed to retrieve code. Status code:", response.status_code)
+            for i, call_api in enumerate(valid_for_api):
+                if call_api:
+                    processed_texts.append(texts[i])
+
+    return ''.join(processed_texts)
+
 
 def call_API(text):
     print(str(len(text.split())) + "Before: " + text)
@@ -225,7 +293,6 @@ def call_API(text):
     if response.status_code == 200:
         generated_code_list = response.json()
         for i, code in enumerate(generated_code_list):
-
             print("After: " + transform_result(text, code) + "\n\n")
 
             return transform_result(text, code)
@@ -233,6 +300,7 @@ def call_API(text):
         print("Failed to retrieve code. Status code:", response.status_code)
 
         return "[Failed to correct: " + text
+
 
 def transform_result(s1, s2):
     result_str = ""
@@ -242,22 +310,23 @@ def transform_result(s1, s2):
 
         if s1[1].islower():
             result_str += s2[0].lower() + s2[1:]
-        
+
         else:
             result_str += s2[0].upper() + s2[1:]
-    
+
     else:
         if s1[0].islower():
             result_str = s2[0].lower() + s2[1:]
-        
+
         else:
             result_str = s2[0].upper() + s2[1:]
 
-    if s1.endswith(' ') and s2.endswith('.') :
+    if s1.endswith(' ') and s2.endswith('.'):
         result_str = result_str.rstrip('.')
         result_str += ' '
 
     return result_str
+
 
 def is_heading(paragraph):
     """Checks if a paragraph is a heading.
@@ -267,8 +336,17 @@ def is_heading(paragraph):
     """
     if paragraph.style.name.startswith('Heading'):
         return True
-    
-def splitKeepDelimiter(s, delimiter):
-    split = s.split(delimiter)
 
-    return [substr + delimiter for substr in split[:-1]] + [split[-1]]
+
+def splitKeepDelimiter(s):
+    # Regular expression to split on ".", "!", or "?" but keep the delimiter
+    split = re.split(r'([.!?](?=\s|$))', s)
+
+    # Rejoin the split parts to form sentences, excluding newlines
+    res = []
+    for i in range(0, len(split) - 1, 2):
+        combined = split[i] + (split[i + 1] if i + 1 < len(split) else '')
+        if combined.strip():
+            res.append(combined)
+
+    return res

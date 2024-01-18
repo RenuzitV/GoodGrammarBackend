@@ -213,4 +213,7 @@ def get_subscription_details(user_id) -> dict[str, Any]:
     # fetch products from subscription items
     # print(subscription_items)
 
-    return subscription_items.data[0].plan.metadata
+    return {
+        'subscription_id': active_subscriptions.data[0].id,
+        **subscription_items.data[0].plan.metadata
+    }
