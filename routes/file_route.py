@@ -87,12 +87,12 @@ def upload_file(token):
     for para in paragraphs:
 
         # Skip the reference
-        if is_heading(para) and para.text.lower() == "references":
+        if is_heading(para) and "reference" in para.text.lower():
             print("Found")
             break
 
         # If the current paragraph is not heading and not a blank
-        if is_heading(para) or para.text == "":
+        if is_heading(para) or para.text.strip() == "":
             continue
 
         if len(para.runs) == 0 or para.runs[0].text == "" or para.text == "":
@@ -118,7 +118,8 @@ def upload_file(token):
         corrected_paragraph = call_API_group(texts)
 
         # Clear the paragraph and insert the corrected text with the first run's
-        para.runs.clear()
+        para.clear()
+
         new_run = para.add_run(corrected_paragraph)
         new_run.font.name = font_name
         new_run.font.size = font_size
@@ -260,7 +261,7 @@ def call_API_group(texts):
                     corrected_text = clean_text(body[prompt_index].strip())
                     # print("before: ", texts[i])
                     # print("After: ", corrected_text, "\n\n")
-                    processed_texts.append(corrected_text)
+                    processed_texts.append(transform_result(corrected_text, texts[i]))
                     prompt_index += 1
                 else:
                     processed_texts.append(texts[i])
@@ -341,6 +342,9 @@ def is_heading(paragraph):
 def splitKeepDelimiter(s):
     # Regular expression to split on ".", "!", or "?" but keep the delimiter
     split = re.split(r'([.!?](?=\s|$))', s)
+
+    if len(split) < 2:
+        return split
 
     # Rejoin the split parts to form sentences, excluding newlines
     res = []
