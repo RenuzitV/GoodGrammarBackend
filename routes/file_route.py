@@ -118,7 +118,11 @@ def upload_file(token):
         corrected_paragraph = call_API_group(texts)
 
         # Clear the paragraph and insert the corrected text with the first run's
-        para.runs.clear()
+        # para.runs.clear()
+
+        for row in para.runs:
+            row.clear()
+
         new_run = para.add_run(corrected_paragraph)
         new_run.font.name = font_name
         new_run.font.size = font_size
