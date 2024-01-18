@@ -174,6 +174,7 @@ def get_file_info():
         }
     )
 
+
 @bp.route('/get_file', methods=['GET'])
 def get_file():
     fileId = request.args.get('file_id')
