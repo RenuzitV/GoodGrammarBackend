@@ -217,7 +217,7 @@ def allowed_file(filename):
 
 def clean_text(text):
     # Regular expression to find the first occurrence of ".", "!", "?", or newline
-    match = re.search(r"[.!?]|[\n\r]", text)
+    match = re.search(r"[.!?](?=\s|$)|[\n\r]", text)
 
     if match:
         # Return the substring up to and including the first matched character
@@ -233,13 +233,15 @@ def call_API_group(texts):
     prompts = []
     param = []
     valid_for_api = []  # check if we should call the API for this text
-    append_text = "correct english, no asking, simple answer, only response, keep formatting, no spaces: "
+    # prepend_text = "correct english, no asking, simple answer, only response, keep formatting, no spaces: "
+    prepend_text = "Correct English in the following text: "
+    # append_text = " Here is the correct version:"
+    append_text = ""
 
     for text in texts:
         # Check if the text contains alphabetic characters
         if re.search("[a-zA-Z]", text) and len(text) < max_length:
-            prompts.append(
-                append_text + text)
+            prompts.append(prepend_text + text + append_text)
             valid_for_api.append(True)
         else:
             valid_for_api.append(False)
@@ -256,14 +258,14 @@ def call_API_group(texts):
             for i, call_api in enumerate(valid_for_api):
                 if call_api:
                     corrected_text = clean_text(body[prompt_index].strip())
-                    print("before: ", texts[i])
-                    print("After: ", corrected_text, "\n\n")
+                    # print("before: ", texts[i])
+                    # print("After: ", corrected_text, "\n\n")
                     processed_texts.append(corrected_text)
                     prompt_index += 1
                 else:
                     processed_texts.append(texts[i])
         else:
-            print("Failed to retrieve code. Status code:", response.status_code)
+            # print("Failed to retrieve code. Status code:", response.status_code)
             for i, call_api in enumerate(valid_for_api):
                 if call_api:
                     processed_texts.append(texts[i])
