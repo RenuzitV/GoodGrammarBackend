@@ -228,6 +228,7 @@ def clean_text(text):
 
 
 def call_API_group(texts):
+    max_length = 256
     processed_texts = []
     prompts = []
     param = []
@@ -236,7 +237,7 @@ def call_API_group(texts):
 
     for text in texts:
         # Check if the text contains alphabetic characters
-        if re.search("[a-zA-Z]", text) and len(text) < 128:
+        if re.search("[a-zA-Z]", text) and len(text) < max_length:
             prompts.append(
                 append_text + text)
             valid_for_api.append(True)
@@ -244,7 +245,7 @@ def call_API_group(texts):
             valid_for_api.append(False)
 
     if prompts:
-        # param += [("max_length", 128)]
+        param += [("max_length", max_length)]
         param += [("prompts", prompt) for prompt in prompts]
 
         response = requests.get(API_URL, params=param)
