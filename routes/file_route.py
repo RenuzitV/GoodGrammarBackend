@@ -238,7 +238,6 @@ def call_API_group(texts):
     # append_text = " Here is the correct version:"
     append_text = ""
 
-
     for text in texts:
         # Check if the text contains alphabetic characters
         if re.search("[a-zA-Z]", text) and len(text) < max_length:
@@ -259,8 +258,8 @@ def call_API_group(texts):
             for i, call_api in enumerate(valid_for_api):
                 if call_api:
                     corrected_text = clean_text(body[prompt_index].strip())
-                    print("before: ", texts[i])
-                    print("After: ", corrected_text, "\n\n")
+                    # print("before: ", texts[i])
+                    # print("After: ", corrected_text, "\n\n")
                     processed_texts.append(corrected_text)
                     prompt_index += 1
                 else:
