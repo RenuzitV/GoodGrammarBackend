@@ -43,6 +43,6 @@ cors = CORS(app, resources={r"*": {"origins": ["https://good-grammar.vercel.app/
 on_dev = os.getenv('FLASK_ENV') != 'production'
 if on_dev:
     print("Running on development environment")
-    app.run()
+    app.run(threaded=True)
 else:
     print("Running on production environment, expecting gunicorn to handle it")
