@@ -45,20 +45,11 @@ def get_all_users():
 @bp.route('get_subscription_tier', methods=['GET'])
 @token_required
 def get_user_subscription_tier(token):
-    FREE_TIER = jsonify({
-        "subscription_id": "0",
-        "tier": "0",
-        "interval": "month",
-        "name": "Free"
-    })
 
     user_id = get_user_id(token)
 
     try:
         tier = stripe_service.get_subscription_details(user_id)
-
-        if tier is None:
-            return FREE_TIER, 200
 
         return jsonify(tier), 200
 
@@ -66,10 +57,6 @@ def get_user_subscription_tier(token):
         print("could not get user", user_id)
         print("Error: ", e)
         abort(404, "User not found")
-    except NoActiveSubscriptionError as e:
-        print("User", user_id, "does not have an active subscription")
-        print("Error: ", e)
-        return FREE_TIER, 200
     except Exception as e:
         print("Error: ", e)
         abort(500, "Internal Server Error")

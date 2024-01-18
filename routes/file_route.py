@@ -9,6 +9,7 @@ from bson.binary import Binary
 from werkzeug.utils import secure_filename
 
 from middleware.clerk_middleware import token_required
+from middleware.stripe_middleware import authentication_and_subscription_threshold_required
 from services import user_service
 from services.file_service import save_file
 from models.file_model import FileObject
@@ -58,7 +59,8 @@ def get_file_content():
 
 
 @bp.route('/upload', methods=['POST'])
-@token_required
+# @token_required
+@authentication_and_subscription_threshold_required()
 def upload_file(token):
     # Check if the post request has the file part
     if 'file' not in request.files:
@@ -138,20 +140,20 @@ def upload_file(token):
 
     encoded = Binary(binaryStream1.read())
 
-    myDoc = save_file(filename=filename.split(".")[0] + "-fixed.docx", encodedBinFile=encoded)
+    user_id = get_user_id(token)
 
-    userId = ""
+    myDoc = save_file(filename=filename.split(".")[0] + "-fixed.docx", encodedBinFile=encoded, user_id=user_id)
 
     try:
-        userId = get_user_id(token)
-        user_service.add_file_to_history(userId, str(myDoc.id))
+        user_service.add_file_to_history(user_id, str(myDoc.id))
     except UserNotFoundError as e:
-        print("could not get user", userId)
+        print("could not get user", user_id)
         print("Error: ", e)
         abort(404, "User not found")
     except Exception as e:
         print("Error: ", e)
         abort(500, "Internal Server Error")
+
 
     return jsonify(
         {
@@ -229,7 +231,9 @@ def clean_text(text):
 
 
 def call_API_group(texts):
-    max_length = 256
+    # Find the longest string (word-wise) in the list, and multiply by 1.1 to account for any
+    # extra characters the promt adds
+    max_length = int(max(len(text.split()) for text in texts) * 1.1)
     processed_texts = []
     prompts = []
     param = []
@@ -257,7 +261,7 @@ def call_API_group(texts):
             body = response.json()
             prompt_index = 0  # To track the index in prompts
             for i, call_api in enumerate(valid_for_api):
-                if call_api:
+                if call_api and prompt_index < len(body):
                     corrected_text = clean_text(body[prompt_index].strip())
                     # print("before: ", texts[i])
                     # print("After: ", corrected_text, "\n\n")
@@ -354,3 +358,4 @@ def splitKeepDelimiter(s):
             res.append(combined)
 
     return res
+

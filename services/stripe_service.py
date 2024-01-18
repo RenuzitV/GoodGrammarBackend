@@ -195,12 +195,20 @@ def check_user_has_access_based_on_tier(user: User, tier: SubscriptionTier):
 
 
 def get_subscription_details(user_id) -> dict[str, Any]:
+    FREE_TIER = {
+        "subscription_id": "0",
+        "tier": "0",
+        "interval": "month",
+        "name": "Free"
+    }
+
     user = user_service.get_user(user_id)
 
     active_subscriptions = get_active_subscriptions(user)
 
     if len(active_subscriptions) == 0:
-        raise NoActiveSubscriptionError("User does not have an active subscription")
+        print("User does not have an active subscription")
+        return FREE_TIER
 
     if len(active_subscriptions) > 1:
         print("User has more than one active subscription")
@@ -221,4 +229,3 @@ def get_subscription_details(user_id) -> dict[str, Any]:
         'price_id': subscription_items.data[0].price.id,
         **subscription_items.data[0].plan.metadata
     }
-

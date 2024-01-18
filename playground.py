@@ -1,15 +1,8 @@
-a = "asd"
-b = None
+from database import db
+from models.file_model import FileObject
 
-c = ""
+db.initialize_db()
 
-if a is not None:
-    c += a
+print(FileObject.objects().first().deleted)
 
-if b is not None:
-    c += " " + b
-
-if c is None or c == "":
-    c = "John Doe"
-
-print(c)
+FileObject.objects(deleted__exists=False).update(set__deleted=False)
