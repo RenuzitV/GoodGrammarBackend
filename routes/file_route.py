@@ -59,8 +59,8 @@ def get_file_content():
 
 
 @bp.route('/upload', methods=['POST'])
-# @token_required
-@authentication_and_subscription_threshold_required()
+@token_required
+# @authentication_and_subscription_threshold_required()
 def upload_file(token):
     # Check if the post request has the file part
     if 'file' not in request.files:
