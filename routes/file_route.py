@@ -109,10 +109,11 @@ def upload_file(token):
         font_underline = first_run.underline
         font_color = first_run.font.color.rgb
 
-        paragraph_text = ""
+        # paragraph_text = ""
         # Aggregate text for the entire paragraph
-        for run in para.runs:
-            paragraph_text += run.text
+        # for run in para.runs:
+        #     paragraph_text += run.text
+        paragraph_text = ''.join(run.text for run in para.runs)
 
         texts = splitKeepDelimiter(paragraph_text)
 
