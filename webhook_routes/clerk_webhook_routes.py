@@ -125,23 +125,23 @@ def clerk_webhook_update():
         abort(500, "Internal Server Error")
 
 
-@bp.route('/signup_2', methods=['POST'])
-def clerk_webhook_no_svix():
-    try:
-        payload = request.get_json()
-
-        user_id, user_email, user_name = get_user_info_from_payload(payload)
-
-        created_user = user_service.create_user(user_id, user_email, user_name)
-        return jsonify({"status": "ok"}), 200
-
-    except UserAlreadyExistsError:
-        return abort(409, "User already exists")
-
-    except WebhookVerificationError:
-        print("Invalid Webhook signature from Clerk")
-        abort(401, "Invalid Webhook signature from Clerk")
-
-    except Exception as e:
-        print("Failed to process webhook:", e)
-        abort(500, "Internal Server Error")
+# @bp.route('/signup_2', methods=['POST'])
+# def clerk_webhook_no_svix():
+#     try:
+#         payload = request.get_json()
+#
+#         user_id, user_email, user_name = get_user_info_from_payload(payload)
+#
+#         created_user = user_service.create_user(user_id, user_email, user_name)
+#         return jsonify({"status": "ok"}), 200
+#
+#     except UserAlreadyExistsError:
+#         return abort(409, "User already exists")
+#
+#     except WebhookVerificationError:
+#         print("Invalid Webhook signature from Clerk")
+#         abort(401, "Invalid Webhook signature from Clerk")
+#
+#     except Exception as e:
+#         print("Failed to process webhook:", e)
+#         abort(500, "Internal Server Error")
