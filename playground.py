@@ -1,8 +1,11 @@
 from database import db
 from models.file_model import FileObject
+from models.user_model import User
 
 db.initialize_db()
 
-print(FileObject.objects().first().deleted)
+users = User.objects()
 
-FileObject.objects(deleted__exists=False).update(set__deleted=False)
+for user in users:
+    user.get_history().update
+    user.save()

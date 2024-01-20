@@ -77,6 +77,10 @@ def change_customer_subscription(token):
 @bp.route('/stripe_portal', methods=['POST'])
 @token_required
 def get_stripe_portal_url(token):
+    """
+    Gets the Stripe Customer Portal URL for a user. Requires the decorative function `token_required` to retrieve the user information.
+    :return:
+    """
     user_id = get_user_id(token)
     if not user_id:
         abort(400, "User id is required")
